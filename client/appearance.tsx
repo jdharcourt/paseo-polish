@@ -356,7 +356,7 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
                 />
                 <SettingsSwitch
                   label="React to cursor"
-                  hint="Smooth viewpoint and depth changes as you move the pointer."
+                  hint="Part the ASCII around your pointer, leaving a soft wake that settles back into place. Respects reduced motion."
                   value={values.interactive}
                   onValueChange={(interactive) => update({ interactive })}
                   disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}

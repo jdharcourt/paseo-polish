@@ -21,7 +21,7 @@ Choose Lunar terrain, Saturn rings, Whirlpool galaxy, or Pillars of Creation. Ea
 - **Character size:** 4–20 px, from fine detail to large visible glyphs.
 - **Artwork scale:** fill the pane, or zoom to 125%, 150%, or 200% independently of character size.
 - **Animate ASCII:** steady lunar camera drift, circulating Saturn ring detail, differential galaxy rotation, and layered nebula gas.
-- **React to cursor:** a smoothly eased viewpoint shift with depth parallax.
+- **React to cursor:** local ASCII displacement around the pointer, with a continuous wake that gently refills after you move. Works independently of scene animation.
 - **Image visibility** and **Image position:** adjust strength and vertical crop.
 
 Animation pauses for hidden or offscreen panes. Motion and cursor displacement respect the system's reduced-motion preference. Wallpaper canvases do not intercept clicks, typing, selection, or scrolling. Effects start off and apply to the built-in ASCII presets. Scene-specific motion uses a local WebGL glyph renderer, preserving upright characters as the scene changes. Browsers without WebGL retain the detailed 2D artwork with gentle camera motion.
@@ -30,7 +30,7 @@ You can also upload a JPEG, PNG, or WebP up to 8 MB and 40 megapixels. Custom im
 
 Images and preferences stay in this app or browser's local storage and do not sync between devices. They are not sent to the daemon, an agent, or an image service. Other trusted code running in the same app can access that storage. This plugin has no backend component or runtime downloads.
 
-Motion studies include [ASCII Magic’s Cosmos collection](https://www.ascii-magic.com/ascii/category/cosmos) and [Astro ASCII](https://github.com/kenny2077/astro-ascii). The effects are artistic, time-compressed interpretations of space imagery, rather than astronomical simulations.
+Cursor interaction is inspired by [Insomnia](https://getinsomnia.app/). Motion studies include [ASCII Magic’s Cosmos collection](https://www.ascii-magic.com/ascii/category/cosmos) and [Astro ASCII](https://github.com/kenny2077/astro-ascii). The effects are artistic, time-compressed interpretations of space imagery, rather than astronomical simulations.
 
 ## Interface
 
