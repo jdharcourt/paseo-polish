@@ -1,0 +1,40 @@
+{
+  "name": "paseo-plugin-polish",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Rounded Paseo UI, color themes, and interactive space ASCII backgrounds.",
+  "type": "module",
+  "files": [
+    "paseo-plugin.json",
+    "OVERVIEW.md",
+    "index.client.tsx",
+    "client/",
+    "assets/interface.png",
+    "assets/space/selection.jpg"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.mjs",
+    "backgrounds": "node scripts/generate-backgrounds.mjs"
+  },
+  "devDependencies": {
+    "@getpaseo/plugin": "0.17.1",
+    "@napi-rs/canvas": "^1.2.0",
+    "@types/react": "~19.2.0",
+    "esbuild": "^0.28.2",
+    "jsdom": "^29.1.1",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "typescript": "^5.9.3",
+    "zod": "^4.4.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jdharcourt/paseo-polish.git"
+  },
+  "homepage": "https://github.com/jdharcourt/paseo-polish",
+  "bugs": {
+    "url": "https://github.com/jdharcourt/paseo-polish/issues"
+  },
+  "license": "UNLICENSED"
+}
