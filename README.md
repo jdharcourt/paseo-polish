@@ -9,7 +9,7 @@ A Paseo plugin with a Hoplite-inspired interface, Geist typography, rounded cont
 Requires Paseo 0.17.1 or newer. Install from GitHub:
 
 ```sh
-paseo plugin add git:jdharcourt/paseo-polish --ref feat/paseo-polish-20261121
+paseo plugin add git:jdharcourt/paseo-polish
 ```
 
 Enable plugins in Settings → Plugins. Plugins are trusted, unsandboxed code. Open **Paseo Polish** in the sidebar or use `/appearance`. Select **Paseo Polish** once under Settings → Appearance, then switch Graphite, Charcoal, or Paper in the plugin menu.
