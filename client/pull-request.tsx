@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import {
   openExternalUrl,
@@ -7,6 +7,8 @@ import {
   useRpc,
   type PluginWorkspacePanelProps,
 } from "@getpaseo/plugin/client";
+import { ScrollView } from "@getpaseo/plugin/client/ui";
+import { NotraButton, NotraDisclosure } from "./notra";
 import { Icon, Markdown } from "@getpaseo/plugin/client/ui";
 import { readPullRequest } from "../shared/pull-request";
 import type { CheckoutState } from "../shared/checkout";
@@ -127,7 +129,7 @@ export function PullRequestView({
     <View style={{ flex: 1, backgroundColor: theme.colors.surface0 }}>
       <View
         style={{
-          height: 44,
+          minHeight: 48,
           paddingHorizontal: 12,
           flexDirection: "row",
           alignItems: "center",
@@ -136,7 +138,7 @@ export function PullRequestView({
           borderBottomColor: theme.colors.border,
         }}
       >
-        <Pressable
+        <NotraButton theme={theme}
           accessibilityRole="link"
           accessibilityLabel="View pull request on GitHub"
           onPress={() => void openExternalUrl(pr.url)}
@@ -153,8 +155,8 @@ export function PullRequestView({
             color={theme.colors.foregroundMuted}
           />
           <Text style={muted}>View</Text>
-        </Pressable>
-        <Pressable
+        </NotraButton>
+        <NotraButton theme={theme}
           accessibilityRole="button"
           accessibilityLabel="Refresh pull request"
           disabled={refreshing}
@@ -166,11 +168,11 @@ export function PullRequestView({
             size={17}
             color={theme.colors.foregroundMuted}
           />
-        </Pressable>
+        </NotraButton>
       </View>
       <ScrollView contentContainerStyle={{ paddingVertical: 16, gap: 16 }}>
         <View style={{ paddingHorizontal: 12, gap: 12 }}>
-          <Text selectable style={{ ...text, fontSize: 17, lineHeight: 24 }}>
+          <Text selectable style={{ ...text, fontSize: 18, lineHeight: 26, fontWeight: "600" }}>
             {pr.title}{" "}
             <Text style={{ color: theme.colors.foregroundMuted }}>
               #{pr.number}
@@ -231,7 +233,7 @@ export function PullRequestView({
               PR head changed; refreshing checkout identity…
             </Text>
           ) : null}
-          <Pressable
+          <NotraButton theme={theme}
             accessibilityRole="button"
             accessibilityLabel="Toggle pull request checks"
             accessibilityState={{ expanded: checksOpen }}
@@ -245,7 +247,7 @@ export function PullRequestView({
           >
             <Icon
               name={icons[summaryState]}
-              size={26}
+              size={20}
               color={tones[summaryState]}
             />
             <View style={{ flex: 1, gap: 4 }}>
@@ -262,7 +264,7 @@ export function PullRequestView({
               size={16}
               color={theme.colors.foregroundMuted}
             />
-          </Pressable>
+          </NotraButton>
         </View>
         {checksOpen && data ? (
           <View>
@@ -279,9 +281,9 @@ export function PullRequestView({
               {(
                 ["all", "success", "failure", "pending", "skipped"] as const
               ).map((state) => (
-                <Pressable
+                <NotraButton theme={theme}
                   key={state}
-                  accessibilityRole="button"
+                  accessibilityRole="tab"
                   accessibilityLabel={`Show ${state} checks`}
                   accessibilityState={{ selected: selected === state }}
                   onPress={() => setFilter(state)}
@@ -296,13 +298,13 @@ export function PullRequestView({
                       ? `All ${data.checks.length}`
                       : `${state === "success" ? "Passed" : state === "failure" ? "Failed" : state === "pending" ? "Pending" : "Skipped"} ${counts[state]}`}
                   </Text>
-                </Pressable>
+                </NotraButton>
               ))}
             </View>
             {data.checks
               .filter((check) => selected === "all" || check.state === selected)
               .map((check, index) => (
-                <Pressable
+                <NotraButton theme={theme}
                   key={`${check.name}:${index}`}
                   accessibilityRole="link"
                   accessibilityLabel={`${check.name}: ${check.state}`}
@@ -338,20 +340,20 @@ export function PullRequestView({
                         ? `${Math.floor(check.durationSeconds / 60)}m ${check.durationSeconds % 60}s`
                         : `${check.durationSeconds}s`}
                   </Text>
-                </Pressable>
+                </NotraButton>
               ))}
           </View>
         ) : null}
         <View
           style={{ borderTopWidth: 1, borderTopColor: theme.colors.border }}
         >
-          <Pressable
+          <NotraButton theme={theme}
             accessibilityRole="button"
             accessibilityLabel="Toggle pull request activity"
             accessibilityState={{ expanded: activityOpen }}
             onPress={() => setActivityOpen(!activityOpen)}
             style={{
-              height: 44,
+              minHeight: 48,
               paddingHorizontal: 12,
               flexDirection: "row",
               alignItems: "center",
@@ -369,17 +371,17 @@ export function PullRequestView({
               size={14}
               color={theme.colors.statusSuccess}
             />
-            <Text style={muted}>{approvals}</Text>
+            <Text accessibilityLabel={`${approvals} current-head approvals`} style={muted}>{approvals}</Text>
             <Icon
               name="MessageSquare"
               size={14}
               color={theme.colors.foregroundMuted}
             />
-            <Text style={muted}>{comments}</Text>
-          </Pressable>
+            <Text accessibilityLabel={`${comments} comments`} style={muted}>{comments}</Text>
+          </NotraButton>
           {activityOpen ? (
             <View style={{ paddingHorizontal: 12, gap: 12 }}>
-              <Pressable
+              <NotraButton theme={theme}
                 accessibilityRole="button"
                 accessibilityLabel="Add all PR activity to chat"
                 disabled={!composers.length || !data?.activity.length}
@@ -407,7 +409,7 @@ export function PullRequestView({
                   color={theme.colors.foregroundMuted}
                 />
                 <Text style={muted}>Add all to chat</Text>
-              </Pressable>
+              </NotraButton>
               {data?.limited ? (
                 <Text style={muted}>
                   Showing a limited activity preview; view the PR for the full
@@ -418,22 +420,17 @@ export function PullRequestView({
                 <Text style={muted}>No comments or reviews yet</Text>
               ) : null}
               {data?.activity.map((item) => (
-                <View
+                <NotraDisclosure
                   key={item.id}
-                  style={{
-                    borderWidth: 1,
-                    borderColor: theme.colors.border,
-                    borderRadius: 8,
-                  }}
-                >
+                  theme={theme}
+                  label={`Toggle ${item.author}'s activity ${item.id}`}
+                  title={<>
                   <View
                     style={{
-                      padding: 12,
                       flexDirection: "row",
+                      flexWrap: "wrap",
                       alignItems: "center",
                       gap: 8,
-                      borderBottomWidth: 1,
-                      borderBottomColor: theme.colors.border,
                     }}
                   >
                     <View
@@ -462,7 +459,10 @@ export function PullRequestView({
                       {new Date(item.time).toLocaleDateString()}
                     </Text>
                   </View>
-                  <View style={{ padding: 12 }}>
+                    <Text numberOfLines={1} style={muted}>{item.body || item.state.toLowerCase().replaceAll("_", " ")}</Text>
+                  </>}
+                >
+                  <View>
                     {item.body ? (
                       <Markdown>{item.body}</Markdown>
                     ) : (
@@ -471,7 +471,7 @@ export function PullRequestView({
                       </Text>
                     )}
                   </View>
-                  <Pressable
+                  <NotraButton theme={theme}
                     accessibilityRole="button"
                     accessibilityLabel={`Add ${item.author}'s activity to chat`}
                     disabled={!composers.length}
@@ -492,8 +492,8 @@ export function PullRequestView({
                       color={theme.colors.foregroundMuted}
                     />
                     <Text style={muted}>Add to chat</Text>
-                  </Pressable>
-                </View>
+                  </NotraButton>
+                </NotraDisclosure>
               ))}
             </View>
           ) : null}

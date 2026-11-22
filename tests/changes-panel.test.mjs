@@ -26,7 +26,7 @@ await build({
             path === "react-native"
               ? 'export const Pressable="Pressable", ScrollView="ScrollView", Text="Text", View="View";'
               : path.endsWith("/ui")
-                ? 'export const Icon="Icon", Markdown="Markdown";'
+                ? 'export const Icon="Icon", Markdown="Markdown", ScrollView="ScrollView";'
                 : "export const useRpc=()=>globalThis.inspectCheckout; export const useComposers=()=>[]; export const useWorkspace=(id,select)=>select({branch:globalThis.branches[id]??null}); export const openExternalUrl=async()=>{};",
         }));
       },

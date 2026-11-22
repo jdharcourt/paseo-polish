@@ -26,7 +26,7 @@ await build({
             path === "react-native"
               ? 'export const Pressable="Pressable", ScrollView="ScrollView", Text="Text", View="View";'
               : path.endsWith("/ui")
-                ? 'export const Icon="Icon", Markdown="Markdown";'
+                ? 'export const Icon="Icon", Markdown="Markdown", ScrollView="ScrollView";'
                 : "export const useRpc=()=>globalThis.readPr; export const useComposers=()=>globalThis.composers; export const openExternalUrl=async(url)=>globalThis.openedUrls.push(url);",
         }));
       },
@@ -142,6 +142,11 @@ test("PR window shows real title, merged state, passed check durations, and acti
   assert.match(output, /1m 27s/);
   assert.match(output, /reviewer/);
   assert.match(output, /Check \*\*this\*\* change/);
+  assert.equal(renderer.root.findAllByType("Markdown").length, 0);
+  await act(async () => button(renderer, "Toggle reviewer's activity comment").props.onPress());
+  assert.equal(renderer.root.findAllByType("Markdown").length, 1);
+  await act(async () => button(renderer, "Toggle reviewer's activity comment").props.onPress());
+  assert.equal(renderer.root.findAllByType("Markdown").length, 0);
   await act(async () =>
     button(renderer, "View pull request on GitHub").props.onPress(),
   );

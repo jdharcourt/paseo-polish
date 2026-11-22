@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import {
   useRpc,
@@ -9,6 +9,8 @@ import {
   type PluginWorkspacePanelProps,
   type PluginButtonIconProps,
 } from "@getpaseo/plugin/client";
+import { ScrollView } from "@getpaseo/plugin/client/ui";
+import { NotraButton } from "./notra";
 import { Icon } from "@getpaseo/plugin/client/ui";
 import { PullRequestView } from "./pull-request";
 import { inspectCheckout } from "../shared/checkout";
@@ -54,12 +56,12 @@ export function ChangesPanel({
         }}
       >
         <Text style={{ ...text, fontWeight: "600" }}>Changes &amp; PR</Text>
-        <Pressable
+        <NotraButton theme={theme}
           accessibilityRole="button"
           onPress={() => void query.refetch()}
         >
           <Text style={text}>Refresh</Text>
-        </Pressable>
+        </NotraButton>
       </View>
       {query.isPending || (!data && !query.isError) ? (
         <Text style={muted}>Reading workspace checkout…</Text>
@@ -90,14 +92,14 @@ export function ChangesPanel({
                 paddingBottom: 12,
               }}
             >
-              <Pressable
+              <NotraButton theme={theme}
                 accessibilityRole="link"
                 onPress={() => void openExternalUrl(data.pullRequest!.url)}
               >
                 <Text style={{ ...text, fontWeight: "600" }}>
                   #{data.pullRequest.number} {data.pullRequest.title}
                 </Text>
-              </Pressable>
+              </NotraButton>
               <Text style={muted}>
                 {data.pullRequest.state} · base {data.pullRequest.base}
               </Text>
@@ -214,14 +216,14 @@ export function PullRequestPanel({
               ? "No verified pull request found for this branch"
               : "Looking up this workspace’s pull request…")}
       </Text>
-      <Pressable
+      <NotraButton theme={theme}
         accessibilityRole="button"
         onPress={() => {
           void refresh().catch(() => {});
         }}
       >
         <Text style={{ color: theme.colors.foreground }}>Refresh</Text>
-      </Pressable>
+      </NotraButton>
     </ScrollView>
   );
 }
