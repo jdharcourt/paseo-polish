@@ -288,3 +288,19 @@ test("ASCII settings persist and reject invalid sizes and animation flags", () =
   assert.equal(values.animated, true);
   assert.equal(values.interactive, true);
 });
+
+test("cursor controls migrate existing preferences, persist, and reject invalid values", () => {
+  assert.equal(api.getAppearance().values.cursorForce, "push");
+  assert.equal(api.getAppearance().values.cursorStrength, 50);
+  assert.equal(api.getAppearance().values.cursorTrail, 50);
+  assert.equal(api.getAppearance().values.cursorBounce, 0);
+  api.saveAppearance({ cursorForce: "pull", cursorStrength: 100, cursorTrail: 25, cursorBounce: 75 });
+  for (const patch of [{ cursorForce: "spin" }, { cursorStrength: -1 }, { cursorStrength: 25.5 }, { cursorTrail: 101 }, { cursorBounce: false }]) assert.throws(() => api.saveAppearance(patch));
+  cleanup();
+  cleanup = api.mountAppearance();
+  const values = api.getAppearance().values;
+  assert.equal(values.cursorForce, "pull");
+  assert.equal(values.cursorStrength, 100);
+  assert.equal(values.cursorTrail, 25);
+  assert.equal(values.cursorBounce, 75);
+});

@@ -1,4 +1,5 @@
 import type { PluginClientContext } from "@getpaseo/plugin/client";
+import { Platform } from "react-native";
 import {
   AppearanceItem,
   AppearanceScreen,
@@ -20,6 +21,10 @@ export default function contribute(client: PluginClientContext) {
     name: "Paseo Polish",
     ...colorSchemes[scheme],
   });
+  const mobileThemes = Platform.OS === "web" ? [] : [
+    client.addTheme({ id: "charcoal", name: "Paseo Polish · Charcoal", ...colorSchemes.charcoal }),
+    client.addTheme({ id: "paper", name: "Paseo Polish · Paper", ...colorSchemes.paper }),
+  ];
   const unsubscribe = subscribeAppearance(() => {
     const next = getAppearance().values.scheme;
     if (next === scheme) return;
@@ -68,6 +73,7 @@ export default function contribute(client: PluginClientContext) {
   return () => {
     unsubscribe();
     removeTheme();
+    for (const remove of mobileThemes) remove();
     unmount();
   };
 }

@@ -2,9 +2,10 @@ import { Platform } from "react-native";
 import { createAsciiGpu, type GpuCanvas } from "./ascii-gpu.web";
 import spaceBackgrounds from "./space-images.json";
 import { asciiGlyphs, buildAsciiGrid } from "./ascii-grid";
+import { AsciiWake } from "./ascii-wake";
 import type { Preferences } from "./preferences";
 
-type Pointer = { clientX: number; clientY: number; pointerType?: string };
+type Pointer = { clientX: number; clientY: number; timeStamp: number; pointerType?: string };
 export type AsciiTarget = {
   appendChild(canvas: AsciiCanvas): void;
   getBoundingClientRect(): { left: number; top: number; width: number; height: number };
@@ -72,12 +73,11 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
   let frame = 0;
   let lastTime = 0;
   let elapsed = 0;
-  let cursorX = 0;
-  let cursorY = 0;
+  let wake = new AsciiWake(1, 1);
+  const sample = new Float32Array(3);
   let active = true;
   let contextLost = false;
   let visible = true;
-  let pointer: { x: number; y: number } | null = null;
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   let grid = buildAsciiGrid(field, 1, 1, values.characterSize, values.backgroundScale, values.position);
   canvas.setAttribute("data-paseo-polish-canvas", "");
@@ -92,27 +92,51 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
   const draw = (time: number) => {
     frame = 0;
     if (!active || contextLost || !visible || document.hidden) return;
-    if (time - lastTime < 40) { queue(); return; }
+    if (time - lastTime < 1000 / 30) { queue(); return; }
     const delta = lastTime ? Math.min(.1, (time - lastTime) / 1000) : 0;
     lastTime = time;
     const animated = values.animated && !reducedMotion.matches;
     if (animated) elapsed += delta;
-    const targetX = values.interactive && pointer && !reducedMotion.matches ? pointer.x : 0;
-    const targetY = values.interactive && pointer && !reducedMotion.matches ? pointer.y : 0;
-    cursorX = reducedMotion.matches ? 0 : cursorX + (targetX - cursorX) * (1 - Math.exp(-delta * 9));
-    cursorY = reducedMotion.matches ? 0 : cursorY + (targetY - cursorY) * (1 - Math.exp(-delta * 9));
+    if (wake.active) wake.step(delta);
     if (gpu) {
-      if (!gpu.draw(width, height, ratio, grid.cellWidth, grid.cellHeight, values.backgroundScale, { top: 0, center: .5, bottom: 1 }[values.position], elapsed, { custom: 0, lunar: 0, saturn: 1, galaxy: 2, nebula: 3 }[values.background], cursorX, cursorY)) {
+      if (!gpu.draw(width, height, ratio, grid.cellWidth, grid.cellHeight, values.backgroundScale, { top: 0, center: .5, bottom: 1 }[values.position], elapsed, { custom: 0, lunar: 0, saturn: 1, galaxy: 2, nebula: 3 }[values.background], wake)) {
         contextLost = true;
         target.removeAttribute("data-paseo-polish-ascii");
         return;
       }
     } else if (context && base) {
       context.clearRect(0, 0, width, height);
-      const margin = elapsed > 0 || values.interactive ? .02 : 0;
-      context.drawImage(base, -width * margin / 2 + Math.sin(elapsed * .018) * width * .006 + cursorX * width * .006, -height * margin / 2 + (Math.cos(elapsed * .013) - 1) * height * .003 + cursorY * height * .006, width * (1 + margin), height * (1 + margin));
+      const margin = elapsed > 0 ? .02 : 0;
+      const driftX = -width * margin / 2 + Math.sin(elapsed * .018) * width * .006;
+      const driftY = -height * margin / 2 + (Math.cos(elapsed * .013) - 1) * height * .003;
+      context.drawImage(base, driftX, driftY, width * (1 + margin), height * (1 + margin));
+      if (wake.active) {
+        const fit = Math.max(width / 768, height / 432) * values.backgroundScale / 100;
+        const left = (width - 768 * fit) / 2;
+        const top = (height - 432 * fit) * ({ top: 0, center: .5, bottom: 1 }[values.position]);
+        const cellWidth = grid.cellWidth * (1 + margin);
+        const cellHeight = grid.cellHeight * (1 + margin);
+        for (let row = Math.max(0, Math.floor((wake.bounds.top - driftY) / cellHeight)); row < Math.min(grid.rows, Math.ceil((wake.bounds.bottom - driftY) / cellHeight)); row++) {
+          for (let column = Math.max(0, Math.floor((wake.bounds.left - driftX) / cellWidth)); column < Math.min(grid.columns, Math.ceil((wake.bounds.right - driftX) / cellWidth)); column++) {
+            const px = column * cellWidth + driftX;
+            const py = row * cellHeight + driftY;
+            wake.sample(px + cellWidth / 2, py + cellHeight / 2, sample);
+            if (!sample[0] && !sample[1] && !sample[2]) continue;
+            const x = Math.max(0, Math.min(767, Math.floor(((px + cellWidth / 2 - driftX) / (1 + margin) - sample[0] - left) / fit)));
+            const y = Math.max(0, Math.min(431, Math.floor(((py + cellHeight / 2 - driftY) / (1 + margin) - sample[1] - top) / fit)));
+            const value = field[y * 768 + x];
+            const edge = Math.abs(value - field[y * 768 + Math.max(0, x - 1)]) + Math.abs(value - field[Math.max(0, y - 1) * 768 + x]);
+            const light = Math.min(1, Math.max(0, (value / 255 - .02) * 1.35 + edge / 255 * .25)) ** .8 * (1 - sample[2] * .85);
+            context.fillStyle = "#080808";
+            context.fillRect(px, py, cellWidth, cellHeight);
+            const tone = Math.round(75 + light * 170);
+            context.fillStyle = `rgb(${tone},${tone},${tone})`;
+            context.fillText(asciiGlyphs[Math.round(light * (asciiGlyphs.length - 1))], px, py);
+          }
+        }
+      }
     }
-    if (animated || Math.abs(cursorX - targetX) > .0001 || Math.abs(cursorY - targetY) > .0001) queue();
+    if (animated || wake.active) queue();
   };
   const refresh = () => {
     if (!active || contextLost || values.background === "custom") return;
@@ -135,6 +159,7 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
     canvas.height = Math.max(1, Math.round(height * ratio));
     if (base) { base.width = canvas.width; base.height = canvas.height; }
     grid = buildAsciiGrid(field, width, height, values.characterSize, values.backgroundScale, values.position);
+    wake = new AsciiWake(width, height, values.cursorForce, values.cursorStrength, values.cursorTrail, values.cursorBounce);
     if (gpu) {
       gpu.setField(field);
       gpu.refreshAtlas();
@@ -161,16 +186,17 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
     queue();
   };
   const onPointer = (event: Pointer) => {
-    if (!values.interactive || reducedMotion.matches || event.pointerType === "touch") return;
+    if (!values.interactive || reducedMotion.matches || !visible || document.hidden || event.pointerType === "touch") return;
     const bounds = target.getBoundingClientRect();
-    pointer = { x: (event.clientX - bounds.left) / bounds.width * 2 - 1, y: (event.clientY - bounds.top) / bounds.height * 2 - 1 };
-    queue();
+    wake.move(event.clientX - bounds.left, event.clientY - bounds.top, event.timeStamp);
+    if (wake.active) queue();
   };
-  const onLeave = () => { pointer = null; queue(); };
+  const onLeave = () => { wake.leave(); };
   const onVisibility = () => {
     cancelAnimationFrame(frame);
     frame = 0;
-    pointer = null;
+    wake.clear();
+    lastTime = 0;
     queue();
   };
   const onContextLost = (event: { preventDefault(): void }) => {
@@ -206,7 +232,6 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
     update(next: Preferences) {
       if (values === next) return;
       values = next;
-      pointer = null;
       refresh();
     },
     dispose() {

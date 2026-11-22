@@ -21,7 +21,7 @@ Choose Lunar terrain, Saturn rings, Whirlpool galaxy, or Pillars of Creation. Ea
 - **Character size:** 4–20 px, from fine detail to large visible glyphs.
 - **Artwork scale:** fill the pane, or zoom to 125%, 150%, or 200% independently of character size.
 - **Animate ASCII:** steady lunar camera drift, circulating Saturn ring detail, differential galaxy rotation, and layered nebula gas.
-- **React to cursor:** a smoothly eased viewpoint shift with depth parallax.
+- **React to cursor:** local ASCII displacement around the pointer. Choose **Push away** or **Pull in**, **Gentle / Normal / Strong** strength, **Off / Short / Medium / Long** trails, and **Off / Soft / Springy** bounce. Controls apply immediately, stay on this device, and work independently of scene animation.
 - **Image visibility** and **Image position:** adjust strength and vertical crop.
 
 Animation pauses for hidden or offscreen panes. Motion and cursor displacement respect the system's reduced-motion preference. Wallpaper canvases do not intercept clicks, typing, selection, or scrolling. Effects start off and apply to the built-in ASCII presets. Scene-specific motion uses a local WebGL glyph renderer, preserving upright characters as the scene changes. Browsers without WebGL retain the detailed 2D artwork with gentle camera motion.
@@ -30,7 +30,7 @@ You can also upload a JPEG, PNG, or WebP up to 8 MB and 40 megapixels. Custom im
 
 Images and preferences stay in this app or browser's local storage and do not sync between devices. They are not sent to the daemon, an agent, or an image service. Other trusted code running in the same app can access that storage. This plugin has no backend component or runtime downloads.
 
-Motion studies include [ASCII Magic’s Cosmos collection](https://www.ascii-magic.com/ascii/category/cosmos) and [Astro ASCII](https://github.com/kenny2077/astro-ascii). The effects are artistic, time-compressed interpretations of space imagery, rather than astronomical simulations.
+Cursor interaction is inspired by [Insomnia](https://getinsomnia.app/). Motion studies include [ASCII Magic’s Cosmos collection](https://www.ascii-magic.com/ascii/category/cosmos) and [Astro ASCII](https://github.com/kenny2077/astro-ascii). The effects are artistic, time-compressed interpretations of space imagery, rather than astronomical simulations.
 
 ## Interface
 
@@ -38,7 +38,9 @@ Buttons and tabs use Hoplite's 10-pixel control radius, with rounded command/out
 
 Geist and Geist Mono are bundled under the [SIL Open Font License](client/Geist-OFL.txt). Space-image credits and 4K/text exports are in [assets/space](assets/space/README.md).
 
-Layout and effects work in desktop and web. Native mobile clients retain their native chat layout and support the contributed theme. Styling targets internal Paseo selectors verified against 0.17.1; later versions may require updates.
+Layout, images, and ASCII animation work in desktop and mobile browsers, including phone-sized layouts. Phone and touch layouts use 44-pixel controls and 16-pixel input text. Choose a background separately in each browser; appearance does not sync between devices.
+
+Native iOS and Android support Graphite, Charcoal, and Paper through Settings → Appearance: choose **Paseo Polish** (Graphite), **Paseo Polish · Charcoal**, or **Paseo Polish · Paper**. The native app saves this choice. Native chat wallpapers and global button/layout styling are not exposed by the current plugin API; the plugin links to the mobile web app for the full appearance. Native device rendering has not been verified on hardware. Styling targets internal Paseo selectors verified against 0.17.1; later versions may require updates.
 
 ## Development
 

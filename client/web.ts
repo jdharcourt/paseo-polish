@@ -262,11 +262,16 @@ html[data-paseo-polish] [data-testid="polish-preview-image"] img { object-positi
 @media(max-width:600px) {
   html[data-paseo-polish] [data-testid="agent-chat-scroll"] > div { padding-inline:16px !important; }
   html[data-paseo-polish] [data-chat-rail-lane="true"] { padding-inline:16px !important; }
-  html[data-paseo-polish] [data-testid="agent-controls-toolbar"] [role="button"] { min-height:36px; }
-  html[data-paseo-polish] [data-testid="message-input-attach-button"] { width:36px !important; height:36px !important; }
   html[data-paseo-polish] :is([data-chat-rail-active="true"],[data-paseo-polish-chat]) {
     --paseo-chat-rail-left:16px !important; --paseo-chat-rail-right:16px !important;
   }
+}
+@media(max-width:600px),(pointer:coarse) {
+  html[data-paseo-polish] :is([data-testid="agent-controls-toolbar"],[data-testid="polish-settings"]) :is(button,[role="button"],[role="switch"]) { min-height:44px; }
+  html[data-paseo-polish] [data-testid="message-input-attach-button"] { width:44px !important; height:44px !important; }
+  html[data-paseo-polish] :is([role="menuitem"],[role="option"]) { min-height:44px; }
+  html[data-paseo-polish] :is(input,textarea,[contenteditable="true"],[role="combobox"]):not([type="range"],[type="checkbox"],[type="radio"],[type="file"]) { font-size:16px !important; }
+  html[data-paseo-polish] [data-testid="message-input-root"] :is(textarea,[contenteditable="true"]) { font-size:16px !important; }
 }
 @media(min-width:900px) {
   html[data-paseo-polish] div:has(> div > div > [data-testid="left-sidebar-resize-handle"]) {

@@ -1,7 +1,8 @@
 import { asciiGlyphs } from "./ascii-grid";
+import type { AsciiWake } from "./ascii-wake";
 
 type Resource = object;
-type GL = Record<"VERTEX_SHADER" | "FRAGMENT_SHADER" | "COMPILE_STATUS" | "LINK_STATUS" | "ARRAY_BUFFER" | "STATIC_DRAW" | "FLOAT" | "TEXTURE_2D" | "TEXTURE0" | "TEXTURE1" | "TEXTURE_MIN_FILTER" | "TEXTURE_MAG_FILTER" | "TEXTURE_WRAP_S" | "TEXTURE_WRAP_T" | "LINEAR" | "CLAMP_TO_EDGE" | "LUMINANCE" | "UNSIGNED_BYTE" | "RGBA" | "TRIANGLES", number> & {
+type GL = Record<"VERTEX_SHADER" | "FRAGMENT_SHADER" | "COMPILE_STATUS" | "LINK_STATUS" | "ARRAY_BUFFER" | "STATIC_DRAW" | "FLOAT" | "TEXTURE_2D" | "TEXTURE0" | "TEXTURE1" | "TEXTURE2" | "TEXTURE_MIN_FILTER" | "TEXTURE_MAG_FILTER" | "TEXTURE_WRAP_S" | "TEXTURE_WRAP_T" | "LINEAR" | "CLAMP_TO_EDGE" | "LUMINANCE" | "UNSIGNED_BYTE" | "RGBA" | "TRIANGLES", number> & {
   createShader(kind: number): Resource | null;
   shaderSource(shader: Resource, source: string): void;
   compileShader(shader: Resource): void;
@@ -46,9 +47,9 @@ const fragment = `
 precision highp float;
 uniform sampler2D uPhoto;
 uniform sampler2D uAtlas;
+uniform sampler2D uWake;
 uniform vec2 uSize;
 uniform vec2 uCell;
-uniform vec2 uPointer;
 uniform vec2 uCenter;
 uniform float uRatio;
 uniform float uFit;
@@ -66,9 +67,10 @@ void main() {
   vec2 center = (floor(pixel / uCell) + 0.5) * uCell;
   vec2 extent = vec2(768.0,432.0) * uFit;
   vec2 offset = vec2((uSize.x - extent.x) * 0.5, (uSize.y - extent.y) * uPosition);
-  vec2 uv = (center - offset) / extent;
+  vec3 wake = texture2D(uWake,center / uSize).rgb;
+  vec2 displacement = (wake.xy * 255.0 - 128.0) * 0.5;
+  vec2 uv = (center - displacement - offset) / extent;
   float depth = photo(uv);
-  uv += uPointer * (0.006 + depth * 0.01);
   if (uScene == 0) {
     uv += vec2(sin(uTime * 0.018) * 0.015, (cos(uTime * 0.013) - 1.0) * 0.007);
   } else if (uScene == 2) {
@@ -96,6 +98,7 @@ void main() {
   }
   float edge = abs(light-photo(uv-vec2(1.0/768.0,0.0))) + abs(light-photo(uv-vec2(0.0,1.0/432.0)));
   float signal = pow(clamp((light-0.02)*1.35+edge*0.25,0.0,1.0),0.8);
+  signal *= 1.0 - wake.z * 0.85;
   float glyph = floor(signal * (uGlyphs-1.0)+0.5);
   vec2 local = fract(pixel/uCell);
   float ink = texture2D(uAtlas,vec2((glyph+local.x)/uGlyphs,local.y)).a;
@@ -129,18 +132,19 @@ export function createAsciiGpu(canvas: GpuCanvas) {
   const buffer = gl.createBuffer();
   const photo = gl.createTexture();
   const atlas = gl.createTexture();
-  if (!buffer || !photo || !atlas) {
-    gl.deleteBuffer(buffer); gl.deleteTexture(photo); gl.deleteTexture(atlas); gl.deleteProgram(program);
+  const wake = gl.createTexture();
+  if (!buffer || !photo || !atlas || !wake) {
+    gl.deleteBuffer(buffer); gl.deleteTexture(photo); gl.deleteTexture(atlas); gl.deleteTexture(wake); gl.deleteProgram(program);
     return;
   }
-  const locations = Object.fromEntries(["uPhoto","uAtlas","uSize","uCell","uPointer","uCenter","uRatio","uFit","uPosition","uTime","uGlyphs","uScene"].map((name) => [name, gl.getUniformLocation(program, name)]));
+  const locations = Object.fromEntries(["uPhoto","uAtlas","uWake","uSize","uCell","uCenter","uRatio","uFit","uPosition","uTime","uGlyphs","uScene"].map((name) => [name, gl.getUniformLocation(program, name)]));
   gl.useProgram(program);
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
   const position = gl.getAttribLocation(program, "aPosition");
   gl.enableVertexAttribArray(position);
   gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-  for (const texture of [photo, atlas]) {
+  for (const texture of [photo, atlas, wake]) {
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -153,7 +157,7 @@ export function createAsciiGpu(canvas: GpuCanvas) {
   glyphAtlas.width = asciiGlyphs.length * 32;
   glyphAtlas.height = 48;
   const ink = glyphAtlas.getContext("2d");
-  if (!ink) { gl.deleteBuffer(buffer); gl.deleteTexture(photo); gl.deleteTexture(atlas); gl.deleteProgram(program); return; }
+  if (!ink) { gl.deleteBuffer(buffer); gl.deleteTexture(photo); gl.deleteTexture(atlas); gl.deleteTexture(wake); gl.deleteProgram(program); return; }
   return {
     setField(field: Uint8Array) {
       gl.activeTexture(gl.TEXTURE0);
@@ -177,13 +181,16 @@ export function createAsciiGpu(canvas: GpuCanvas) {
       gl.bindTexture(gl.TEXTURE_2D, atlas);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, glyphAtlas);
     },
-    draw(width: number, height: number, ratio: number, cellWidth: number, cellHeight: number, scale: number, position: number, time: number, scene: number, pointerX: number, pointerY: number) {
+    draw(width: number, height: number, ratio: number, cellWidth: number, cellHeight: number, scale: number, position: number, time: number, scene: number, field: AsciiWake) {
       if (gl.isContextLost()) return false;
       gl.useProgram(program);
       gl.viewport(0,0,canvas.width,canvas.height);
-      gl.uniform1i(locations.uPhoto,0); gl.uniform1i(locations.uAtlas,1);
+      gl.activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D,wake);
+      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,field.columns,field.rows,0,gl.RGBA,gl.UNSIGNED_BYTE,field.pixels);
+      gl.uniform1i(locations.uPhoto,0); gl.uniform1i(locations.uAtlas,1); gl.uniform1i(locations.uWake,2);
       gl.uniform2f(locations.uSize,width,height); gl.uniform2f(locations.uCell,cellWidth,cellHeight);
-      gl.uniform2f(locations.uPointer,pointerX,pointerY); gl.uniform2f(locations.uCenter,centerX,centerY);
+      gl.uniform2f(locations.uCenter,centerX,centerY);
       gl.uniform1f(locations.uRatio,ratio); gl.uniform1f(locations.uFit,Math.max(width/768,height/432)*scale/100*1.08);
       gl.uniform1f(locations.uPosition,position); gl.uniform1f(locations.uTime,time);
       gl.uniform1f(locations.uGlyphs,asciiGlyphs.length); gl.uniform1i(locations.uScene,scene);
@@ -191,7 +198,7 @@ export function createAsciiGpu(canvas: GpuCanvas) {
       return true;
     },
     dispose() {
-      gl.deleteBuffer(buffer); gl.deleteTexture(photo); gl.deleteTexture(atlas); gl.deleteProgram(program);
+      gl.deleteBuffer(buffer); gl.deleteTexture(photo); gl.deleteTexture(atlas); gl.deleteTexture(wake); gl.deleteProgram(program);
     },
   };
 }

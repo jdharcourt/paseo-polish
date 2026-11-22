@@ -4,6 +4,7 @@ import type {
   PluginSurfaceProps,
 } from "@getpaseo/plugin/client";
 import {
+  ExternalLink,
   ScrollView,
   SettingsAction,
   SettingsCard,
@@ -138,21 +139,25 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
           ) : null}
           <SettingsRow
             label="Paseo Polish theme"
-            hint="Select Paseo Polish once in Settings → Appearance to use these colors throughout the app."
+            hint={Platform.OS === "web"
+              ? "Select Paseo Polish once in Settings → Appearance to use these colors throughout the app."
+              : "Choose Paseo Polish (Graphite), Paseo Polish · Charcoal, or Paseo Polish · Paper in Settings → Appearance. Your choice stays saved on this device."}
           />
         </SettingsCard>
       </SettingsSection>
       {Platform.OS !== "web" ? (
-        <Text
-          style={{
-            color: theme.colors.foregroundMuted,
-            fontSize: 14,
-            lineHeight: 21,
-          }}
-        >
-          Chat layout and image backgrounds are available in the desktop and web
-          apps. Your mobile chat keeps its native layout.
-        </Text>
+        <View style={{ gap: 12 }}>
+          <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14, lineHeight: 21 }}>
+            Polish colors work throughout the mobile app. For image backgrounds,
+            animated ASCII, and custom button styling, use Paseo in your mobile
+            browser. Choose a background there; appearance stays on each device.
+          </Text>
+          <ExternalLink href="https://app.paseo.sh/" accessibilityLabel="Open Paseo in your browser">
+            <Text style={{ color: theme.colors.accent, fontSize: 16, lineHeight: 24, paddingVertical: 10 }}>
+              Open Paseo in your browser
+            </Text>
+          </ExternalLink>
+        </View>
       ) : (
         <>
           <SettingsSection title="Chat layout">
@@ -356,11 +361,60 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
                 />
                 <SettingsSwitch
                   label="React to cursor"
-                  hint="Smooth viewpoint and depth changes as you move the pointer."
+                  hint="Move the ASCII around your pointer. Respects reduced motion."
                   value={values.interactive}
                   onValueChange={(interactive) => update({ interactive })}
                   disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
                 />
+                {values.interactive ? (
+                  <>
+                    <SettingsSelect
+                      label="Cursor effect"
+                      value={values.cursorForce}
+                      options={[
+                        { label: "Push away", value: "push" },
+                        { label: "Pull in", value: "pull" },
+                      ]}
+                      onValueChange={(cursorForce) => update({ cursorForce })}
+                      disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
+                    />
+                    <SettingsSelect
+                      label="Strength"
+                      value={String(values.cursorStrength)}
+                      options={[
+                        { label: "Gentle", value: "25" },
+                        { label: "Normal", value: "50" },
+                        { label: "Strong", value: "100" },
+                      ]}
+                      onValueChange={(cursorStrength) => update({ cursorStrength: Number(cursorStrength) })}
+                      disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
+                    />
+                    <SettingsSelect
+                      label="Trail"
+                      value={String(values.cursorTrail)}
+                      options={[
+                        { label: "Off", value: "0" },
+                        { label: "Short", value: "25" },
+                        { label: "Medium", value: "50" },
+                        { label: "Long", value: "100" },
+                      ]}
+                      onValueChange={(cursorTrail) => update({ cursorTrail: Number(cursorTrail) })}
+                      disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
+                    />
+                    <SettingsSelect
+                      label="Bounce"
+                      hint="How the characters spring back into place."
+                      value={String(values.cursorBounce)}
+                      options={[
+                        { label: "Off", value: "0" },
+                        { label: "Soft", value: "35" },
+                        { label: "Springy", value: "75" },
+                      ]}
+                      onValueChange={(cursorBounce) => update({ cursorBounce: Number(cursorBounce) })}
+                      disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
+                    />
+                  </>
+                ) : null}
                 <SettingsSelect
                   label="Image visibility"
                   hint="Use a low value to keep the conversation readable."
