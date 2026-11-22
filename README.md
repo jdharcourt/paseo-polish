@@ -28,7 +28,7 @@ Animation pauses for hidden or offscreen panes. Motion and cursor displacement r
 
 You can also upload a JPEG, PNG, or WebP up to 8 MB and 40 megapixels. Custom images retain their photographic appearance. File signatures and MIME types are checked before decoding; images are resized to at most 4096 pixels and re-encoded locally as JPEG. Changing presets keeps your uploaded image saved. **Show wallpaper** switches to a plain surface without deleting it.
 
-Images and preferences stay in this app or browser's local storage and do not sync between devices. They are not sent to the daemon, an agent, or an image service. Other trusted code running in the same app can access that storage. This plugin has no backend component or runtime downloads.
+Images and preferences stay in this app or browser's local storage and do not sync between devices. They are not sent to the daemon, an agent, or an image service. Other trusted code running in the same app can access that storage. Checkout inspection runs on the daemon using Git and the authenticated GitHub CLI.
 
 Cursor interaction is inspired by [Insomnia](https://getinsomnia.app/). Motion studies include [ASCII Magic’s Cosmos collection](https://www.ascii-magic.com/ascii/category/cosmos) and [Astro ASCII](https://github.com/kenny2077/astro-ascii). The effects are artistic, time-compressed interpretations of space imagery, rather than astronomical simulations.
 
@@ -54,3 +54,11 @@ paseo plugin install "$PWD"
 ```
 
 After editing, run the checks and `paseo plugin reload polish`. `npm run backgrounds` regenerates the bundled luminance, thumbnails, 3840 × 2160 wallpapers, text exports, and contact sheet. It uses the system Menlo font on macOS, or the bundled Geist Mono elsewhere, and downloads missing source photographs from NASA over HTTPS. Development source-photo caches are ignored by Git.
+
+## Changes and pull requests
+
+The Changes & PR panel opens automatically on wide layouts when the active workspace has changes or a verified pull request. It reads the actual checkout through the daemon, verifies the PR head repository and branch, and refreshes every three seconds. PR discovery refreshes every 30 seconds. The header button reopens the panel after a manual close. Compact and native clients use that button. No agent instructions or built-in UI selectors are required.
+
+New task worktrees automatically become their parent chat’s checkout target through plugin-owned workspace metadata. A chat with one existing registered task worktree in the same project follows that worktree. An explicit target must be a registered direct child; unrelated workspaces are rejected. Other checkouts are never inferred from PR links in conversation text. PR diffs remain available after merge; local modifications and untracked files are shown separately. Local HEAD mismatches and GitHub lookup errors are displayed explicitly. Only GitHub PRs are supported and the daemon needs Git and authenticated `gh` on its PATH. Git refs, branches, agent placement, and the app source are unchanged.
+
+Each diff preview is limited to 200,000 characters. Untracked previews include at most 100 regular files, with a 32 KB preview limit per file; binary files are identified without rendering their contents. The panel reports omitted content. The daemon sends checkout contents only to connected plugin clients; local changes are not uploaded to GitHub or sent to an agent.
