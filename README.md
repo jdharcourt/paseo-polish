@@ -38,7 +38,9 @@ Buttons and tabs use Hoplite's 10-pixel control radius, with rounded command/out
 
 Geist and Geist Mono are bundled under the [SIL Open Font License](client/Geist-OFL.txt). Space-image credits and 4K/text exports are in [assets/space](assets/space/README.md).
 
-Layout and effects work in desktop and web. Native mobile clients retain their native chat layout and support the contributed theme. Styling targets internal Paseo selectors verified against 0.17.1; later versions may require updates.
+Layout, images, and ASCII animation work in desktop and mobile browsers, including phone-sized layouts. Phone and touch layouts use 44-pixel controls and 16-pixel input text. Choose a background separately in each browser; appearance does not sync between devices.
+
+Native iOS and Android support Graphite, Charcoal, and Paper through Settings → Appearance: choose **Paseo Polish** (Graphite), **Paseo Polish · Charcoal**, or **Paseo Polish · Paper**. The native app saves this choice. Native chat wallpapers and global button/layout styling are not exposed by the current plugin API; the plugin links to the mobile web app for the full appearance. Native device rendering has not been verified on hardware. Styling targets internal Paseo selectors verified against 0.17.1; later versions may require updates.
 
 ## Development
 

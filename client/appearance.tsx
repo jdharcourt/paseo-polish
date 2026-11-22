@@ -4,6 +4,7 @@ import type {
   PluginSurfaceProps,
 } from "@getpaseo/plugin/client";
 import {
+  ExternalLink,
   ScrollView,
   SettingsAction,
   SettingsCard,
@@ -138,21 +139,25 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
           ) : null}
           <SettingsRow
             label="Paseo Polish theme"
-            hint="Select Paseo Polish once in Settings → Appearance to use these colors throughout the app."
+            hint={Platform.OS === "web"
+              ? "Select Paseo Polish once in Settings → Appearance to use these colors throughout the app."
+              : "Choose Paseo Polish (Graphite), Paseo Polish · Charcoal, or Paseo Polish · Paper in Settings → Appearance. Your choice stays saved on this device."}
           />
         </SettingsCard>
       </SettingsSection>
       {Platform.OS !== "web" ? (
-        <Text
-          style={{
-            color: theme.colors.foregroundMuted,
-            fontSize: 14,
-            lineHeight: 21,
-          }}
-        >
-          Chat layout and image backgrounds are available in the desktop and web
-          apps. Your mobile chat keeps its native layout.
-        </Text>
+        <View style={{ gap: 12 }}>
+          <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14, lineHeight: 21 }}>
+            Polish colors work throughout the mobile app. For image backgrounds,
+            animated ASCII, and custom button styling, use Paseo in your mobile
+            browser. Choose a background there; appearance stays on each device.
+          </Text>
+          <ExternalLink href="https://app.paseo.sh/" accessibilityLabel="Open Paseo in your browser">
+            <Text style={{ color: theme.colors.accent, fontSize: 16, lineHeight: 24, paddingVertical: 10 }}>
+              Open Paseo in your browser
+            </Text>
+          </ExternalLink>
+        </View>
       ) : (
         <>
           <SettingsSection title="Chat layout">
