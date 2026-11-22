@@ -356,11 +356,60 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
                 />
                 <SettingsSwitch
                   label="React to cursor"
-                  hint="Part the ASCII around your pointer, leaving a soft wake that settles back into place. Respects reduced motion."
+                  hint="Move the ASCII around your pointer. Respects reduced motion."
                   value={values.interactive}
                   onValueChange={(interactive) => update({ interactive })}
                   disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
                 />
+                {values.interactive ? (
+                  <>
+                    <SettingsSelect
+                      label="Cursor effect"
+                      value={values.cursorForce}
+                      options={[
+                        { label: "Push away", value: "push" },
+                        { label: "Pull in", value: "pull" },
+                      ]}
+                      onValueChange={(cursorForce) => update({ cursorForce })}
+                      disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
+                    />
+                    <SettingsSelect
+                      label="Strength"
+                      value={String(values.cursorStrength)}
+                      options={[
+                        { label: "Gentle", value: "25" },
+                        { label: "Normal", value: "50" },
+                        { label: "Strong", value: "100" },
+                      ]}
+                      onValueChange={(cursorStrength) => update({ cursorStrength: Number(cursorStrength) })}
+                      disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
+                    />
+                    <SettingsSelect
+                      label="Trail"
+                      value={String(values.cursorTrail)}
+                      options={[
+                        { label: "Off", value: "0" },
+                        { label: "Short", value: "25" },
+                        { label: "Medium", value: "50" },
+                        { label: "Long", value: "100" },
+                      ]}
+                      onValueChange={(cursorTrail) => update({ cursorTrail: Number(cursorTrail) })}
+                      disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
+                    />
+                    <SettingsSelect
+                      label="Bounce"
+                      hint="How the characters spring back into place."
+                      value={String(values.cursorBounce)}
+                      options={[
+                        { label: "Off", value: "0" },
+                        { label: "Soft", value: "35" },
+                        { label: "Springy", value: "75" },
+                      ]}
+                      onValueChange={(cursorBounce) => update({ cursorBounce: Number(cursorBounce) })}
+                      disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
+                    />
+                  </>
+                ) : null}
                 <SettingsSelect
                   label="Image visibility"
                   hint="Use a low value to keep the conversation readable."

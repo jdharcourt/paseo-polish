@@ -159,7 +159,7 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
     canvas.height = Math.max(1, Math.round(height * ratio));
     if (base) { base.width = canvas.width; base.height = canvas.height; }
     grid = buildAsciiGrid(field, width, height, values.characterSize, values.backgroundScale, values.position);
-    wake = new AsciiWake(width, height);
+    wake = new AsciiWake(width, height, values.cursorForce, values.cursorStrength, values.cursorTrail, values.cursorBounce);
     if (gpu) {
       gpu.setField(field);
       gpu.refreshAtlas();

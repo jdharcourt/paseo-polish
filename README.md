@@ -21,7 +21,7 @@ Choose Lunar terrain, Saturn rings, Whirlpool galaxy, or Pillars of Creation. Ea
 - **Character size:** 4–20 px, from fine detail to large visible glyphs.
 - **Artwork scale:** fill the pane, or zoom to 125%, 150%, or 200% independently of character size.
 - **Animate ASCII:** steady lunar camera drift, circulating Saturn ring detail, differential galaxy rotation, and layered nebula gas.
-- **React to cursor:** local ASCII displacement around the pointer, with a continuous wake that gently refills after you move. Works independently of scene animation.
+- **React to cursor:** local ASCII displacement around the pointer. Choose **Push away** or **Pull in**, **Gentle / Normal / Strong** strength, **Off / Short / Medium / Long** trails, and **Off / Soft / Springy** bounce. Controls apply immediately, stay on this device, and work independently of scene animation.
 - **Image visibility** and **Image position:** adjust strength and vertical crop.
 
 Animation pauses for hidden or offscreen panes. Motion and cursor displacement respect the system's reduced-motion preference. Wallpaper canvases do not intercept clicks, typing, selection, or scrolling. Effects start off and apply to the built-in ASCII presets. Scene-specific motion uses a local WebGL glyph renderer, preserving upright characters as the scene changes. Browsers without WebGL retain the detailed 2D artwork with gentle camera motion.
