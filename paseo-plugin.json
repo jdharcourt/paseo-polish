@@ -1,0 +1,11 @@
+{
+  "id": "polish",
+  "name": "Paseo Polish",
+  "description": "Rounded Paseo UI, color themes, and interactive space ASCII backgrounds.",
+  "media": [
+    "assets/interface.png"
+  ],
+  "requirements": {
+    "paseo": ">=0.17.1"
+  }
+}
