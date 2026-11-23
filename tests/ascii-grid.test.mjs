@@ -36,8 +36,8 @@ test("every bundled preset contains genuine high-resolution photo luminance", as
   const catalog = JSON.parse(await readFile("client/space-images.json", "utf8"));
   for (const entry of Object.values(catalog)) {
     if (entry.source === "https://devault.design/ascii-art-generator/library/") {
-      assert.match(entry.image, /^data:image\/webp;base64,/);
-      if (entry.name.includes("animated")) assert.match(entry.video, /^data:video\/mp4;base64,/);
+      assert.match(entry.image, /^data:image\/jpeg;base64,/);
+      assert.equal(entry.video, undefined);
       continue;
     }
     const field = Buffer.from(entry.field, "base64");

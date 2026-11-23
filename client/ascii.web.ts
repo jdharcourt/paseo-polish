@@ -2,6 +2,7 @@ import { Platform } from "react-native";
 import { createAsciiGpu, type GpuCanvas } from "./ascii-gpu.web";
 import spaceBackgrounds from "./space-images.json";
 import { asciiGlyphs, buildAsciiGrid } from "./ascii-grid";
+import { asciiScenes, updateAsciiScene } from "./ascii-scenes";
 import { AsciiWake } from "./ascii-wake";
 import type { Preferences } from "./preferences";
 
@@ -36,7 +37,6 @@ type AsciiCanvas = GpuCanvas & {
 declare const document: {
   hidden: boolean;
   fonts?: { load(font: string): Promise<unknown> };
-  createElement(tag: "video"): AsciiCanvas & { src: string; poster: string; muted: boolean; loop: boolean; playsInline: boolean; play(): Promise<void>; pause(): void };
   createElement(tag: "canvas"): AsciiCanvas;
   addEventListener(name: "visibilitychange", callback: () => void): void;
   removeEventListener(name: "visibilitychange", callback: () => void): void;
@@ -59,39 +59,6 @@ const fields = new Map<string, Uint8Array>();
 
 export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) {
   if (Platform.OS !== "web" || initial.background === "custom" || typeof ResizeObserver === "undefined" || typeof window.matchMedia !== "function") return;
-  if (initial.background.startsWith("devault")) {
-    const media = document.createElement("video");
-    media.setAttribute("data-paseo-polish-canvas", "");
-    media.setAttribute("aria-hidden", "true");
-    media.setAttribute("style", "object-fit:cover");
-    media.muted = true;
-    media.loop = true;
-    media.playsInline = true;
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let current = initial;
-    const update = (next: Preferences) => {
-      current = next;
-      if (next.background === "custom") return;
-      const entry = spaceBackgrounds[next.background];
-      media.poster = entry.image;
-      if (media.src !== entry.video) media.src = entry.video;
-      if (next.animated && !motion.matches && !document.hidden && entry.video) void media.play().catch(() => {});
-      else media.pause();
-    };
-    const refresh = () => update(current);
-    target.appendChild(media);
-    target.setAttribute("data-paseo-polish-ascii", "");
-    motion.addEventListener("change", refresh);
-    document.addEventListener("visibilitychange", refresh);
-    update(initial);
-    return { update, dispose() {
-      media.pause();
-      media.remove();
-      target.removeAttribute("data-paseo-polish-ascii");
-      motion.removeEventListener("change", refresh);
-      document.removeEventListener("visibilitychange", refresh);
-    } };
-  }
   let canvas = document.createElement("canvas");
   let gpu = createAsciiGpu(canvas);
   if (!gpu) canvas = document.createElement("canvas");
@@ -108,6 +75,8 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
   let lastTime = 0;
   let elapsed = 0;
   let wake = new AsciiWake(1, 1);
+  const procedural = initial.background in asciiScenes;
+  let sceneTime = -1;
   const sample = new Float32Array(3);
   let active = true;
   let contextLost = false;
@@ -131,6 +100,12 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
     lastTime = time;
     const animated = values.animated && !reducedMotion.matches;
     if (animated) elapsed += delta;
+    if (procedural && (sceneTime < 0 || animated && elapsed - sceneTime >= 1 / 15)) {
+      updateAsciiScene(field, values.background, elapsed);
+      if (!gpu) grid = buildAsciiGrid(field, width, height, values.characterSize, values.backgroundScale, values.position);
+      paintField();
+      sceneTime = elapsed;
+    }
     if (wake.active) wake.step(delta);
     if (gpu) {
       if (!gpu.draw(width, height, ratio, grid.cellWidth, grid.cellHeight, values.backgroundScale, { top: 0, center: .5, bottom: 1 }[values.position], elapsed, ({ custom: 0, lunar: 0, saturn: 1, galaxy: 2, nebula: 3 } as Record<string, number>)[values.background] ?? 0, wake)) {
@@ -172,31 +147,9 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
     }
     if (animated || wake.active) queue();
   };
-  const refresh = () => {
-    if (!active || contextLost || values.background === "custom") return;
-    if (!fields.has(values.background)) {
-      const decoded = atob(spaceBackgrounds[values.background].field);
-      if (decoded.length !== 768 * 432) return;
-      fields.set(values.background, Uint8Array.from(decoded, (value) => value.charCodeAt(0)));
-    }
-    field = fields.get(values.background)!;
-    const bounds = target.getBoundingClientRect();
-    width = Math.round(bounds.width);
-    height = Math.round(bounds.height);
-    if (!width || !height) {
-      cancelAnimationFrame(frame);
-      frame = 0;
-      return;
-    }
-    ratio = Math.min(2, window.devicePixelRatio || 1, 4096 / Math.max(width, height));
-    canvas.width = Math.max(1, Math.round(width * ratio));
-    canvas.height = Math.max(1, Math.round(height * ratio));
-    if (base) { base.width = canvas.width; base.height = canvas.height; }
-    grid = buildAsciiGrid(field, width, height, values.characterSize, values.backgroundScale, values.position);
-    wake = new AsciiWake(width, height, values.cursorForce, values.cursorStrength, values.cursorTrail, values.cursorBounce);
+  const paintField = () => {
     if (gpu) {
       gpu.setField(field);
-      gpu.refreshAtlas();
     } else if (context && baseContext) {
       for (const ctx of [context, baseContext]) {
         ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
@@ -215,6 +168,34 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
         }
       }
     }
+  };
+  const refresh = () => {
+    if (!active || contextLost || values.background === "custom") return;
+    if (procedural) {
+      field = new Uint8Array(768 * 432);
+      updateAsciiScene(field, values.background, elapsed);
+    } else if (!fields.has(values.background)) {
+      const decoded = atob(spaceBackgrounds[values.background].field);
+      if (decoded.length !== 768 * 432) return;
+      fields.set(values.background, Uint8Array.from(decoded, (value) => value.charCodeAt(0)));
+    }
+    if (!procedural) field = fields.get(values.background)!;
+    const bounds = target.getBoundingClientRect();
+    width = Math.round(bounds.width);
+    height = Math.round(bounds.height);
+    if (!width || !height) {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      return;
+    }
+    ratio = Math.min(2, window.devicePixelRatio || 1, 4096 / Math.max(width, height));
+    canvas.width = Math.max(1, Math.round(width * ratio));
+    canvas.height = Math.max(1, Math.round(height * ratio));
+    if (base) { base.width = canvas.width; base.height = canvas.height; }
+    grid = buildAsciiGrid(field, width, height, values.characterSize, values.backgroundScale, values.position);
+    wake = new AsciiWake(width, height, values.cursorForce, values.cursorStrength, values.cursorTrail, values.cursorBounce);
+    gpu?.refreshAtlas();
+    paintField();
     target.setAttribute("data-paseo-polish-ascii", "");
     lastTime = 0;
     queue();
