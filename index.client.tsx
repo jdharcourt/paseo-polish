@@ -5,6 +5,7 @@ import {
   AppearanceScreen,
   AppearanceSettings,
 } from "./client/appearance";
+import { registerChanges } from "./client/changes";
 import { colorSchemes } from "./client/color-schemes";
 import {
   getAppearance,
@@ -15,6 +16,7 @@ import {
 // Paseo requires a default export for runtime entrypoints.
 export default function contribute(client: PluginClientContext) {
   const unmount = mountAppearance();
+  const unmountVisibility = registerChanges(client);
   let scheme = getAppearance().values.scheme;
   let removeTheme = client.addTheme({
     id: "polish",
@@ -75,5 +77,6 @@ export default function contribute(client: PluginClientContext) {
     removeTheme();
     for (const remove of mobileThemes) remove();
     unmount();
+    unmountVisibility();
   };
 }

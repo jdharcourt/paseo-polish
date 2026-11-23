@@ -15,7 +15,8 @@ import {
   SidebarRow,
 } from "@getpaseo/plugin/client/ui";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Image, Platform, Pressable, Text, View } from "react-native";
+import { Image, Platform, Text, View } from "react-native";
+import { NotraButton } from "./notra";
 import { preferencesSchema, type Preferences } from "./preferences";
 import spaceBackgrounds from "./space-images.json";
 import {
@@ -198,7 +199,7 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
               </Text>
               <View accessibilityLabel="Space backgrounds" style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
                 {Object.entries(spaceBackgrounds).map(([id, background]) => (
-                  <Pressable
+                  <NotraButton theme={theme}
                     key={id}
                     testID={`polish-background-${id}`}
                     accessibilityRole="button"
@@ -213,7 +214,7 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
                       <Text style={{ color: theme.colors.foreground, fontSize: 14 }}>{background.name}</Text>
                       {values.background === id && values.wallpaperEnabled ? <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14 }}>Selected</Text> : null}
                     </View>
-                  </Pressable>
+                  </NotraButton>
                 ))}
               </View>
               <View
@@ -464,7 +465,7 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
               {notice}
             </Text>
           ) : null}
-          <Pressable
+          <NotraButton theme={theme}
             accessibilityRole="button"
             disabled={picking}
             accessibilityState={{ disabled: picking }}
@@ -482,7 +483,7 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
             <Text style={{ color: theme.colors.foreground, fontSize: 14 }}>
               Reset appearance
             </Text>
-          </Pressable>
+          </NotraButton>
         </>
       )}
     </View>
