@@ -4,7 +4,7 @@ export const preferencesSchema = z.object({
   enabled: z.boolean().default(true),
   scheme: z.enum(["graphite", "charcoal", "paper"]).default("graphite"),
   layoutVersion: z.literal(2).default(2),
-  background: z.enum(["custom", "lunar", "saturn", "galaxy", "nebula"]).default("custom"),
+  background: z.enum(["custom", "lunar", "saturn", "galaxy", "nebula", "devaultRing", "devaultDiscs", "devaultLilac", "devaultMotion"]).default("custom"),
   characterSize: z.number().int().min(4).max(20).default(6),
   backgroundScale: z.number().int().min(100).max(200).default(100),
   animated: z.boolean().default(false),

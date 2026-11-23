@@ -36,6 +36,7 @@ type AsciiCanvas = GpuCanvas & {
 declare const document: {
   hidden: boolean;
   fonts?: { load(font: string): Promise<unknown> };
+  createElement(tag: "video"): AsciiCanvas & { src: string; poster: string; muted: boolean; loop: boolean; playsInline: boolean; play(): Promise<void>; pause(): void };
   createElement(tag: "canvas"): AsciiCanvas;
   addEventListener(name: "visibilitychange", callback: () => void): void;
   removeEventListener(name: "visibilitychange", callback: () => void): void;
@@ -58,6 +59,39 @@ const fields = new Map<string, Uint8Array>();
 
 export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) {
   if (Platform.OS !== "web" || initial.background === "custom" || typeof ResizeObserver === "undefined" || typeof window.matchMedia !== "function") return;
+  if (initial.background.startsWith("devault")) {
+    const media = document.createElement("video");
+    media.setAttribute("data-paseo-polish-canvas", "");
+    media.setAttribute("aria-hidden", "true");
+    media.setAttribute("style", "object-fit:cover");
+    media.muted = true;
+    media.loop = true;
+    media.playsInline = true;
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let current = initial;
+    const update = (next: Preferences) => {
+      current = next;
+      if (next.background === "custom") return;
+      const entry = spaceBackgrounds[next.background];
+      media.poster = entry.image;
+      if (media.src !== entry.video) media.src = entry.video;
+      if (next.animated && !motion.matches && !document.hidden && entry.video) void media.play().catch(() => {});
+      else media.pause();
+    };
+    const refresh = () => update(current);
+    target.appendChild(media);
+    target.setAttribute("data-paseo-polish-ascii", "");
+    motion.addEventListener("change", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    update(initial);
+    return { update, dispose() {
+      media.pause();
+      media.remove();
+      target.removeAttribute("data-paseo-polish-ascii");
+      motion.removeEventListener("change", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    } };
+  }
   let canvas = document.createElement("canvas");
   let gpu = createAsciiGpu(canvas);
   if (!gpu) canvas = document.createElement("canvas");
@@ -99,7 +133,7 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
     if (animated) elapsed += delta;
     if (wake.active) wake.step(delta);
     if (gpu) {
-      if (!gpu.draw(width, height, ratio, grid.cellWidth, grid.cellHeight, values.backgroundScale, { top: 0, center: .5, bottom: 1 }[values.position], elapsed, { custom: 0, lunar: 0, saturn: 1, galaxy: 2, nebula: 3 }[values.background], wake)) {
+      if (!gpu.draw(width, height, ratio, grid.cellWidth, grid.cellHeight, values.backgroundScale, { top: 0, center: .5, bottom: 1 }[values.position], elapsed, ({ custom: 0, lunar: 0, saturn: 1, galaxy: 2, nebula: 3 } as Record<string, number>)[values.background] ?? 0, wake)) {
         contextLost = true;
         target.removeAttribute("data-paseo-polish-ascii");
         return;

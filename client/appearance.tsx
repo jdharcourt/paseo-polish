@@ -195,9 +195,9 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
           <SettingsSection title="Chat background">
             <View style={{ gap: 12 }}>
               <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14, lineHeight: 21 }}>
-                Detailed, full-window ASCII from space photographs. Select a background to apply it.
+                Space photographs and designs from the Devault ASCII library. Animated options play when animation is enabled.
               </Text>
-              <View accessibilityLabel="Space backgrounds" style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+              <View accessibilityLabel="ASCII backgrounds" style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
                 {Object.entries(spaceBackgrounds).map(([id, background]) => (
                   <NotraButton theme={theme}
                     key={id}
@@ -206,7 +206,7 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
                     accessibilityLabel={`${background.name}${values.background === id && values.wallpaperEnabled ? ", selected" : ""}`}
                     accessibilityState={{ disabled: !values.enabled }}
                     disabled={!values.enabled}
-                    onPress={() => update({ background: id as Exclude<Preferences["background"], "custom">, wallpaperEnabled: true, visibility: 20 })}
+                    onPress={() => update({ background: id as Exclude<Preferences["background"], "custom">, wallpaperEnabled: true, animated: Boolean(background.video), visibility: 20 })}
                     style={{ width: layout.compact ? "100%" : "48%", borderWidth: 1, borderColor: values.background === id && values.wallpaperEnabled ? theme.colors.foreground : theme.colors.border, borderRadius: 8, overflow: "hidden", opacity: values.enabled ? 1 : 0.5 }}
                   >
                     <Image source={{ uri: background.image }} resizeMode="cover" accessible={false} style={{ width: "100%", aspectRatio: 16 / 9, backgroundColor: "#080808" }} />
@@ -286,7 +286,7 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
               </View>
               {values.background !== "custom" ? (
                 <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14, lineHeight: 21 }}>
-                  Source: {spaceBackgrounds[values.background].credit}. Rendered locally as ASCII.
+                  Source: {spaceBackgrounds[values.background].credit}. ASCII background.
                 </Text>
               ) : null}
               <SettingsCard>

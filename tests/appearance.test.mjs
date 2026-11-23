@@ -304,3 +304,10 @@ test("cursor controls migrate existing preferences, persist, and reject invalid 
   assert.equal(values.cursorTrail, 25);
   assert.equal(values.cursorBounce, 75);
 });
+
+ test("wallpaper mounts before a chat exists in the workspace composer", async () => {
+  document.body.innerHTML = '<div><aside data-testid="sidebar-nav-scroll"></aside><main><div id="empty"><div data-testid="message-input-root"></div></div></main></div>';
+  await new Promise(setImmediate);
+  assert.equal(document.querySelector("main").hasAttribute("data-paseo-polish-chat"), true);
+  assert.equal(document.querySelector("aside").hasAttribute("data-paseo-polish-chat"), false);
+ });

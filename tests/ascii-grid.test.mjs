@@ -35,6 +35,11 @@ test("artwork zoom changes the sampled photo independently of character size", (
 test("every bundled preset contains genuine high-resolution photo luminance", async () => {
   const catalog = JSON.parse(await readFile("client/space-images.json", "utf8"));
   for (const entry of Object.values(catalog)) {
+    if (entry.source === "https://devault.design/ascii-art-generator/library/") {
+      assert.match(entry.image, /^data:image\/webp;base64,/);
+      if (entry.name.includes("animated")) assert.match(entry.video, /^data:video\/mp4;base64,/);
+      continue;
+    }
     const field = Buffer.from(entry.field, "base64");
     assert.equal(field.length, 768 * 432);
     assert.ok(new Set(field).size > 200);
