@@ -195,9 +195,9 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
           <SettingsSection title="Chat background">
             <View style={{ gap: 12 }}>
               <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14, lineHeight: 21 }}>
-                Detailed, full-window ASCII from space photographs. Select a background to apply it.
+                Live ASCII scenes inspired by the Devault library, plus space photographs. Every scene supports animation and cursor interaction.
               </Text>
-              <View accessibilityLabel="Space backgrounds" style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+              <View accessibilityLabel="ASCII backgrounds" style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
                 {Object.entries(spaceBackgrounds).map(([id, background]) => (
                   <NotraButton theme={theme}
                     key={id}
@@ -206,7 +206,7 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
                     accessibilityLabel={`${background.name}${values.background === id && values.wallpaperEnabled ? ", selected" : ""}`}
                     accessibilityState={{ disabled: !values.enabled }}
                     disabled={!values.enabled}
-                    onPress={() => update({ background: id as Exclude<Preferences["background"], "custom">, wallpaperEnabled: true, visibility: 20 })}
+                    onPress={() => update({ background: id as Exclude<Preferences["background"], "custom">, wallpaperEnabled: true, animated: true, interactive: true, visibility: 20 })}
                     style={{ width: layout.compact ? "100%" : "48%", borderWidth: 1, borderColor: values.background === id && values.wallpaperEnabled ? theme.colors.foreground : theme.colors.border, borderRadius: 8, overflow: "hidden", opacity: values.enabled ? 1 : 0.5 }}
                   >
                     <Image source={{ uri: background.image }} resizeMode="cover" accessible={false} style={{ width: "100%", aspectRatio: 16 / 9, backgroundColor: "#080808" }} />
@@ -286,7 +286,7 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
               </View>
               {values.background !== "custom" ? (
                 <Text style={{ color: theme.colors.foregroundMuted, fontSize: 14, lineHeight: 21 }}>
-                  Source: {spaceBackgrounds[values.background].credit}. Rendered locally as ASCII.
+                  Source: {spaceBackgrounds[values.background].credit}. ASCII background.
                 </Text>
               ) : null}
               <SettingsCard>
@@ -326,6 +326,30 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
                     disabled={picking}
                   />
                 ) : null}
+                <SettingsSwitch
+                  label="Color ASCII"
+                  hint="Use the Devault website’s four-stop palettes. Switch off for monochrome."
+                  value={values.colorEnabled}
+                  onValueChange={(colorEnabled) => update({ colorEnabled })}
+                  disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
+                />
+                {values.colorEnabled ? (
+                  <SettingsSelect
+                    label="ASCII color"
+                    value={values.asciiColor}
+                    options={[
+                      { label: "Amber", value: "amber" },
+                      { label: "Devault", value: "devault" },
+                      { label: "Console", value: "phosphor" },
+                      { label: "Glacier", value: "ice" },
+                      { label: "Dusk", value: "sunset" },
+                      { label: "Electric", value: "cyber" },
+                      { label: "Mono", value: "mono" },
+                    ]}
+                    onValueChange={(asciiColor) => update({ asciiColor: asciiColor as Preferences["asciiColor"] })}
+                    disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
+                  />
+                ) : null}
                 <SettingsSelect
                   label="Character size"
                   hint="Smaller characters reveal finer detail."
@@ -355,7 +379,7 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
                 />
                 <SettingsSwitch
                   label="Animate ASCII"
-                  hint="Scene-specific motion: lunar drift, circulating rings, rotating galaxy arms, and layered nebula gas. Respects reduced motion."
+                  hint="Animate the selected scene. Respects reduced motion."
                   value={values.animated}
                   onValueChange={(animated) => update({ animated })}
                   disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}

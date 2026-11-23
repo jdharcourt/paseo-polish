@@ -16,7 +16,7 @@ Enable plugins in Settings → Plugins. Plugins are trusted, unsandboxed code. O
 
 ## Backgrounds
 
-Choose Lunar terrain, Saturn rings, Whirlpool galaxy, or Pillars of Creation. Each is drawn from bundled NASA photograph luminance, covers the full chat pane, and remains crisp when resized.
+Choose Lunar terrain, Saturn rings, Whirlpool galaxy, or Pillars of Creation. Each is drawn from bundled NASA photograph luminance, covers the full chat pane, and remains crisp when resized. Sixteen additional procedural ASCII scenes include rings, discs, flowing ribbons, interference waves, terrain, a vortex, a tunnel, and character rain, inspired by the [Devault library](https://devault.design/ascii-art-generator/library/). These generate live luminance fields and use the same cursor physics as the space images; they do not play pre-rendered images or videos. Selecting a preset enables animation and interaction; both can be disabled independently. Backgrounds also appear in the empty workspace composer before a chat begins.
 
 - **Character size:** 4–20 px, from fine detail to large visible glyphs.
 - **Artwork scale:** fill the pane, or zoom to 125%, 150%, or 200% independently of character size.
@@ -53,7 +53,7 @@ npm test
 paseo plugin install "$PWD"
 ```
 
-After editing, run the checks and `paseo plugin reload polish`. `npm run backgrounds` regenerates the bundled luminance, thumbnails, 3840 × 2160 wallpapers, text exports, and contact sheet. It uses the system Menlo font on macOS, or the bundled Geist Mono elsewhere, and downloads missing source photographs from NASA over HTTPS. Development source-photo caches are ignored by Git.
+After editing, run the checks and `paseo plugin reload polish`. `npm run backgrounds` regenerates the bundled luminance, thumbnails, 3840 × 2160 wallpapers, text exports, and contact sheet. It uses the system Menlo font on macOS, or the bundled Geist Mono elsewhere, and downloads missing source photographs from NASA over HTTPS. Development source-photo caches are ignored by Git. Run `node scripts/generate-ascii-scenes.mjs` to regenerate procedural scene thumbnails from their live generators.
 
 ## Changes and pull requests
 
@@ -70,3 +70,7 @@ The daemon requires Git and authenticated `gh` on its PATH. Only GitHub PRs are 
 The plugin uses shared, theme-aware controls adapted from [Notra UI](https://ui.usenotra.com/) patterns for React Native: compact ghost buttons, underline check filters, and collapsible activity rows with one-line previews. PR comments start collapsed beneath CI; expand a row to read Markdown and add it to chat. Settings retain Paseo’s native select and switch controls because the plugin host does not support Notra’s DOM/Tailwind dependencies.
 
 The PR window distinguishes draft, open, merged, closed, and queued pull requests. While queued, it polls every 15 seconds and separates PR checks from the merge queue commit’s checks, showing queue position and state. Expand a check for its reported conclusion, failed steps, summary, and annotations, or open the complete CI output on GitHub. Queue API failures are shown explicitly; an unavailable queue commit never inherits passing PR checks.
+
+ASCII color controls switch between monochrome and the Devault website’s Devault, Console, Amber, Glacier, Dusk, Electric, or Mono palettes. The palette applies to space and procedural scenes in both renderers. Additional live scenes include aurora curtains, plasma currents, a rotating torus, warped lattice, solar corona, and orbital traces.
+
+Palette stops and the Classic glyph ramp match Devault’s generator settings. The procedural scene compositions are original interpretations, not exact copies of the library’s source artwork.

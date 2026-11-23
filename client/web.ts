@@ -331,9 +331,10 @@ export function mountAppearance() {
   const marked = new Map<Element, Element>();
   const asciiLayers = new Map<Element, NonNullable<ReturnType<typeof mountAsciiBackground>>>();
   let layers = new Set<Element>();
+  let renderedBackground = snapshot.values.background;
   const markChats = () => {
     const chats = Array.from(
-      document.querySelectorAll('[data-testid="agent-chat-scroll"]'),
+      document.querySelectorAll('[data-testid="agent-chat-scroll"], [data-testid="message-input-root"]'),
     );
     for (const [chat, target] of marked) {
       if (chats.includes(chat)) continue;
@@ -341,6 +342,7 @@ export function mountAppearance() {
       marked.delete(chat);
     }
     for (const chat of chats) {
+      if (Array.from(marked.values()).some(target => target.querySelector('[data-testid="message-input-root"]') === chat)) continue;
       let target = chat.parentElement;
       for (
         let parent = target;
@@ -356,6 +358,12 @@ export function mountAppearance() {
           break;
         target = parent;
         break;
+      }
+      if (!chat.querySelector('[data-testid="agent-chat-scroll"]') && !target?.querySelector('[data-testid="agent-chat-scroll"]')) {
+        for (let parent = target?.parentElement; parent && ["DIV", "MAIN"].includes(parent.tagName); parent = parent.parentElement) {
+          if (parent.querySelector('[data-testid="sidebar-nav-scroll"], [data-testid="workspace-tabs-row"]') || parent.querySelectorAll('[data-testid="message-input-root"]').length !== 1) break;
+          target = parent;
+        }
       }
       if (!target || marked.get(chat) === target) continue;
       marked.get(chat)?.removeAttribute("data-paseo-polish-chat");
@@ -377,10 +385,11 @@ export function mountAppearance() {
     for (const preview of document.querySelectorAll('[data-testid="polish-background-preview"]')) targets.add(preview);
     const values = snapshot.values;
     for (const [target, renderer] of asciiLayers) {
-      if (targets.has(target) && values.enabled && values.wallpaperEnabled && values.background !== "custom") continue;
+      if (renderedBackground === values.background && targets.has(target) && values.enabled && values.wallpaperEnabled && values.background !== "custom") continue;
       renderer.dispose();
       asciiLayers.delete(target);
     }
+    renderedBackground = values.background;
     if (!values.enabled || !values.wallpaperEnabled || values.background === "custom") return;
     for (const target of targets) {
       const existing = asciiLayers.get(target);
