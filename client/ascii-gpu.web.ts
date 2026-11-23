@@ -30,6 +30,7 @@ type GL = Record<"VERTEX_SHADER" | "FRAGMENT_SHADER" | "COMPILE_STATUS" | "LINK_
   getUniformLocation(program: Resource, name: string): Resource | null;
   uniform1i(location: Resource | null, value: number): void;
   uniform1f(location: Resource | null, value: number): void;
+  uniform3f(location: Resource | null, x: number, y: number, z: number): void;
   uniform2f(location: Resource | null, x: number, y: number): void;
   viewport(x: number, y: number, width: number, height: number): void;
   drawArrays(mode: number, first: number, count: number): void;
@@ -48,6 +49,7 @@ precision highp float;
 uniform sampler2D uPhoto;
 uniform sampler2D uAtlas;
 uniform sampler2D uWake;
+uniform vec3 uColor;
 uniform vec2 uSize;
 uniform vec2 uCell;
 uniform vec2 uCenter;
@@ -103,7 +105,7 @@ void main() {
   vec2 local = fract(pixel/uCell);
   float ink = texture2D(uAtlas,vec2((glyph+local.x)/uGlyphs,local.y)).a;
   float tone = (75.0+signal*170.0)/255.0;
-  gl_FragColor = vec4(vec3(mix(8.0/255.0,tone,ink)),1.0);
+  gl_FragColor = vec4(mix(vec3(8.0/255.0),tone * uColor,ink),1.0);
 }`;
 
 export function createAsciiGpu(canvas: GpuCanvas) {
@@ -137,7 +139,7 @@ export function createAsciiGpu(canvas: GpuCanvas) {
     gl.deleteBuffer(buffer); gl.deleteTexture(photo); gl.deleteTexture(atlas); gl.deleteTexture(wake); gl.deleteProgram(program);
     return;
   }
-  const locations = Object.fromEntries(["uPhoto","uAtlas","uWake","uSize","uCell","uCenter","uRatio","uFit","uPosition","uTime","uGlyphs","uScene"].map((name) => [name, gl.getUniformLocation(program, name)]));
+  const locations = Object.fromEntries(["uColor","uPhoto","uAtlas","uWake","uSize","uCell","uCenter","uRatio","uFit","uPosition","uTime","uGlyphs","uScene"].map((name) => [name, gl.getUniformLocation(program, name)]));
   gl.useProgram(program);
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
@@ -181,13 +183,14 @@ export function createAsciiGpu(canvas: GpuCanvas) {
       gl.bindTexture(gl.TEXTURE_2D, atlas);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, glyphAtlas);
     },
-    draw(width: number, height: number, ratio: number, cellWidth: number, cellHeight: number, scale: number, position: number, time: number, scene: number, field: AsciiWake) {
+    draw(width: number, height: number, ratio: number, cellWidth: number, cellHeight: number, scale: number, position: number, time: number, scene: number, field: AsciiWake, color: number[]) {
       if (gl.isContextLost()) return false;
       gl.useProgram(program);
       gl.viewport(0,0,canvas.width,canvas.height);
       gl.activeTexture(gl.TEXTURE2);
       gl.bindTexture(gl.TEXTURE_2D,wake);
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,field.columns,field.rows,0,gl.RGBA,gl.UNSIGNED_BYTE,field.pixels);
+      gl.uniform3f(locations.uColor,color[0],color[1],color[2]);
       gl.uniform1i(locations.uPhoto,0); gl.uniform1i(locations.uAtlas,1); gl.uniform1i(locations.uWake,2);
       gl.uniform2f(locations.uSize,width,height); gl.uniform2f(locations.uCell,cellWidth,cellHeight);
       gl.uniform2f(locations.uCenter,centerX,centerY);

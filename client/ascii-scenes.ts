@@ -9,6 +9,12 @@ export const asciiScenes = {
   vortex: "Spiral vortex",
   tunnel: "Infinite tunnel",
   rain: "ASCII rain",
+  aurora: "Aurora curtains",
+  plasma: "Plasma currents",
+  torus: "Rotating torus",
+  lattice: "Warped lattice",
+  sun: "Solar corona",
+  orbitals: "Orbital traces",
 };
 
 export function updateAsciiScene(field: Uint8Array, scene: string, time: number) {
@@ -60,6 +66,37 @@ export function updateAsciiScene(field: Uint8Array, scene: string, time: number)
         case "tunnel":
           signal = (.5 + .5 * Math.cos(Math.log(radius + .03) * 24 - time * 3)) ** 8 * (.55 + .4 * Math.sin(angle * 8));
           break;
+        case "aurora":
+          signal = Math.exp(-(((v - Math.sin(u * 4 + time * .4) * .2) * 5) ** 2)) * (.5 + .5 * Math.sin(u * 60 + Math.sin(u * 9 + time * .5) * 4)) ** 2;
+          break;
+        case "plasma":
+          signal = (.5 + (Math.sin(u * 13 + time) + Math.cos(v * 15 - time * .7) + Math.sin((u + v) * 8 + time * .4)) / 6) ** 2;
+          break;
+        case "torus": {
+          const px = u * Math.cos(time * .4) - v * Math.sin(time * .4);
+          const py = u * Math.sin(time * .4) + v * Math.cos(time * .4);
+          const ring = Math.hypot(px, py * 2);
+          signal = Math.exp(-(((ring - .34) * 13) ** 2)) * (.6 + .4 * Math.cos(Math.atan2(py * 2, px) * 18 - time));
+          break;
+        }
+        case "lattice": {
+          const px = u + Math.sin(v * 7 + time * .5) * .1;
+          const py = v + Math.sin(u * 8 - time * .4) * .1;
+          signal = Math.max(Math.exp(-((Math.sin(px * 35) * 7) ** 2)), Math.exp(-((Math.sin(py * 35) * 7) ** 2))) * .8;
+          break;
+        }
+        case "sun":
+          signal = Math.exp(-(((radius - .22) * 15) ** 2)) * (.6 + .4 * Math.sin(angle * 23 + Math.sin(angle * 7 - time) * 2 + time * .5)) + Math.exp(-radius * 10) * .35;
+          break;
+        case "orbitals": {
+          for (let orbit = 0; orbit < 4; orbit++) {
+            const phase = orbit * Math.PI / 4 + time * .12;
+            const px = u * Math.cos(phase) - v * Math.sin(phase);
+            const py = u * Math.sin(phase) + v * Math.cos(phase);
+            signal = Math.max(signal, Math.exp(-(((Math.hypot(px, py * 3) - .4) * 70) ** 2)) * (.6 + .4 * Math.cos(Math.atan2(py, px) * 3 - time)));
+          }
+          break;
+        }
         case "rain": {
           const column = Math.floor(x / 12);
           const speed = .12 + (Math.sin(column * 127.1) * .5 + .5) * .3;

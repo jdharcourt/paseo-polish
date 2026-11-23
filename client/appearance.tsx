@@ -326,6 +326,27 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
                     disabled={picking}
                   />
                 ) : null}
+                <SettingsSwitch
+                  label="Color ASCII"
+                  hint="Tint the characters. Switch off for monochrome."
+                  value={values.colorEnabled}
+                  onValueChange={(colorEnabled) => update({ colorEnabled })}
+                  disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
+                />
+                {values.colorEnabled ? (
+                  <SettingsSelect
+                    label="ASCII color"
+                    value={values.asciiColor}
+                    options={[
+                      { label: "Amber", value: "amber" },
+                      { label: "Moss", value: "moss" },
+                      { label: "Rose", value: "rose" },
+                      { label: "Violet", value: "violet" },
+                    ]}
+                    onValueChange={(asciiColor) => update({ asciiColor: asciiColor as Preferences["asciiColor"] })}
+                    disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
+                  />
+                ) : null}
                 <SettingsSelect
                   label="Character size"
                   hint="Smaller characters reveal finer detail."
@@ -355,7 +376,7 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
                 />
                 <SettingsSwitch
                   label="Animate ASCII"
-                  hint="Scene-specific motion: lunar drift, circulating rings, rotating galaxy arms, and layered nebula gas. Respects reduced motion."
+                  hint="Animate the selected scene. Respects reduced motion."
                   value={values.animated}
                   onValueChange={(animated) => update({ animated })}
                   disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}

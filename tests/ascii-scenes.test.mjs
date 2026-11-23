@@ -62,6 +62,23 @@ test("live renderer animates glyphs, responds to cursor motion and stops for red
   events.get("pointermove")({ clientX: 210, clientY: 90, timeStamp: 1050 });
   step(1100);
   assert.notDeepEqual(canvases[1].toBuffer("image/png"), idle);
+  for (const asciiColor of ["amber", "moss", "rose", "violet"]) {
+    renderer.update(preferencesSchema.parse({ background: "vortex", colorEnabled: true, asciiColor }));
+    step(1150);
+    const pixels = canvases[1].getContext("2d").getImageData(0, 0, 320, 180).data;
+    let colored = false;
+    for (let index = 0; index < pixels.length; index += 4) {
+      if (pixels[index] !== pixels[index + 1] || pixels[index + 1] !== pixels[index + 2]) colored = true;
+    }
+    assert.ok(colored, asciiColor);
+  }
+  renderer.update(preferencesSchema.parse({ background: "vortex", colorEnabled: false, asciiColor: "moss" }));
+  step(1175);
+  const monochrome = canvases[1].getContext("2d").getImageData(0, 0, 320, 180).data;
+  for (let index = 0; index < monochrome.length; index += 4) {
+    assert.equal(monochrome[index], monochrome[index + 1]);
+    assert.equal(monochrome[index + 1], monochrome[index + 2]);
+  }
   motion.matches = true;
   motionChange();
   step(1200);

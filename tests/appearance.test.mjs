@@ -311,3 +311,14 @@ test("cursor controls migrate existing preferences, persist, and reject invalid 
   assert.equal(document.querySelector("main").hasAttribute("data-paseo-polish-chat"), true);
   assert.equal(document.querySelector("aside").hasAttribute("data-paseo-polish-chat"), false);
  });
+
+ test("ASCII color controls persist and reject unsupported palettes", () => {
+  api.saveAppearance({ colorEnabled: true, asciiColor: "rose" });
+  cleanup();
+  cleanup = api.mountAppearance();
+  assert.equal(api.getAppearance().values.colorEnabled, true);
+  assert.equal(api.getAppearance().values.asciiColor, "rose");
+  assert.equal(api.preferencesSchema.safeParse({ asciiColor: "invalid" }).success, false);
+  api.saveAppearance({ colorEnabled: false });
+  assert.equal(api.getAppearance().values.asciiColor, "rose");
+ });

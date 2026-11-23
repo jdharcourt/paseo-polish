@@ -1,3 +1,10 @@
+export const asciiColors = {
+  amber: [1, .68, .3],
+  moss: [.52, 1, .62],
+  rose: [1, .5, .62],
+  violet: [.8, .55, 1],
+};
+
 export const asciiGlyphs = " .,:;il!+<>=?[]{}1tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
 
 export function buildAsciiGrid(

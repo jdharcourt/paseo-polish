@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 import { createAsciiGpu, type GpuCanvas } from "./ascii-gpu.web";
 import spaceBackgrounds from "./space-images.json";
-import { asciiGlyphs, buildAsciiGrid } from "./ascii-grid";
+import { asciiColors, asciiGlyphs, buildAsciiGrid } from "./ascii-grid";
 import { asciiScenes, updateAsciiScene } from "./ascii-scenes";
 import { AsciiWake } from "./ascii-wake";
 import type { Preferences } from "./preferences";
@@ -108,7 +108,7 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
     }
     if (wake.active) wake.step(delta);
     if (gpu) {
-      if (!gpu.draw(width, height, ratio, grid.cellWidth, grid.cellHeight, values.backgroundScale, { top: 0, center: .5, bottom: 1 }[values.position], elapsed, ({ custom: 0, lunar: 0, saturn: 1, galaxy: 2, nebula: 3 } as Record<string, number>)[values.background] ?? 0, wake)) {
+      if (!gpu.draw(width, height, ratio, grid.cellWidth, grid.cellHeight, values.backgroundScale, { top: 0, center: .5, bottom: 1 }[values.position], elapsed, ({ custom: 0, lunar: 0, saturn: 1, galaxy: 2, nebula: 3 } as Record<string, number>)[values.background] ?? 0, wake, values.colorEnabled ? asciiColors[values.asciiColor] : [1, 1, 1])) {
         contextLost = true;
         target.removeAttribute("data-paseo-polish-ascii");
         return;
@@ -139,7 +139,7 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
             context.fillStyle = "#080808";
             context.fillRect(px, py, cellWidth, cellHeight);
             const tone = Math.round(75 + light * 170);
-            context.fillStyle = `rgb(${tone},${tone},${tone})`;
+            context.fillStyle = `rgb(${(values.colorEnabled ? asciiColors[values.asciiColor] : [1, 1, 1]).map(channel => Math.round(tone * channel)).join(",")})`;
             context.fillText(asciiGlyphs[Math.round(light * (asciiGlyphs.length - 1))], px, py);
           }
         }
@@ -163,7 +163,7 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
           const index = row * grid.columns + column;
           if (!grid.glyphs[index]) continue;
           const tone = grid.tones[index];
-          baseContext.fillStyle = `rgb(${tone},${tone},${tone})`;
+          baseContext.fillStyle = `rgb(${(values.colorEnabled ? asciiColors[values.asciiColor] : [1, 1, 1]).map(channel => Math.round(tone * channel)).join(",")})`;
           baseContext.fillText(asciiGlyphs[grid.glyphs[index]], column * grid.cellWidth, row * grid.cellHeight);
         }
       }
