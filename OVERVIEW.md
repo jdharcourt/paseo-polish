@@ -24,4 +24,6 @@ New registered task worktrees automatically become their parent chat’s checkou
 
 The daemon requires Git and authenticated `gh` on its PATH. Only GitHub PRs are supported. Diff previews are limited to 200,000 characters per section; untracked previews include up to 100 regular files with a 32 KB limit per file. PR details show up to 500 checks and the latest 100 activity records with 20,000 characters per body; Add all to chat is limited to 32,000 characters. Truncation is reported. The daemon sends checkout contents to connected plugin clients, and does not upload local changes to GitHub or send them to an agent automatically.
 
-ASCII color controls switch between monochrome and amber, moss, rose, or violet. The palette applies to space and procedural scenes in both renderers. Additional live scenes include aurora curtains, plasma currents, a rotating torus, warped lattice, solar corona, and orbital traces.
+ASCII color controls switch between monochrome and the Devault website’s Devault, Console, Amber, Glacier, Dusk, Electric, or Mono palettes. The palette applies to space and procedural scenes in both renderers. Additional live scenes include aurora curtains, plasma currents, a rotating torus, warped lattice, solar corona, and orbital traces.
+
+Palette stops and the Classic glyph ramp match Devault’s generator settings. The procedural scene compositions are original interpretations, not exact copies of the library’s source artwork.

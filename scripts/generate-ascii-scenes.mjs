@@ -4,7 +4,7 @@ import { readFile, writeFile } from "node:fs/promises";
 
 GlobalFonts.registerFromPath("assets/fonts/GeistMono.woff2", "Scene Mono");
 const bundle = await build({ stdin: { contents: 'export * from "./client/ascii-scenes"; export * from "./client/ascii-grid";', resolveDir: process.cwd() }, bundle: true, write: false, format: "esm" });
-const { asciiScenes, updateAsciiScene, buildAsciiGrid, asciiGlyphs } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`);
+const { asciiScenes, updateAsciiScene, buildAsciiGrid, asciiGlyphs, asciiInk } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`);
 const catalog = JSON.parse(await readFile("client/space-images.json", "utf8"));
 for (const [id, name] of Object.entries(asciiScenes)) {
   const field = new Uint8Array(768 * 432);
@@ -12,14 +12,14 @@ for (const [id, name] of Object.entries(asciiScenes)) {
   const grid = buildAsciiGrid(field, 768, 432, 6, 100, "center");
   const canvas = createCanvas(768, 432);
   const context = canvas.getContext("2d");
-  context.fillStyle = "#080808";
+  context.fillStyle = "#0D0D12";
   context.fillRect(0, 0, 768, 432);
   context.font = `${grid.fontSize}px "Scene Mono"`;
   context.textBaseline = "top";
   for (let row = 0; row < grid.rows; row++) {
     for (let column = 0; column < grid.columns; column++) {
       const index = row * grid.columns + column;
-      context.fillStyle = `rgb(${grid.tones[index]},${grid.tones[index]},${grid.tones[index]})`;
+      context.fillStyle = asciiInk(grid.lights[index] / 255, "devault");
       context.fillText(asciiGlyphs[grid.glyphs[index]], column * grid.cellWidth, row * grid.cellHeight);
     }
   }

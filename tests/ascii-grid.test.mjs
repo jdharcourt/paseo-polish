@@ -4,7 +4,7 @@ import { build } from "esbuild";
 import { readFile } from "node:fs/promises";
 
 const bundle = await build({ entryPoints: ["client/ascii-grid.ts"], bundle: true, write: false, format: "esm", platform: "node" });
-const { buildAsciiGrid, asciiGlyphs } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`);
+const { buildAsciiGrid, asciiGlyphs, asciiInk, asciiPaletteLookup } = await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`);
 
 test("smaller character sizes expose more photo detail without changing the full-window coverage", () => {
   const field = new Uint8Array(768 * 432).fill(255);
@@ -45,4 +45,19 @@ test("every bundled preset contains genuine high-resolution photo luminance", as
     assert.ok(new Set(field).size > 200);
     assert.match(entry.image, /^data:image\/jpeg;base64,\/9j\//);
   }
+});
+
+test("website palette stops and classic glyph ramp match the reference", () => {
+  assert.equal(asciiGlyphs, " .:-=+*#%@");
+  assert.equal(asciiInk(0, "devault"), "rgb(74,64,173)");
+  assert.equal(asciiInk(1 / 3, "devault"), "rgb(138,129,242)");
+  assert.equal(asciiInk(2 / 3, "devault"), "rgb(208,188,247)");
+  assert.equal(asciiInk(1, "devault"), "rgb(244,241,253)");
+  assert.equal(asciiInk(1 / 3, "amber"), "rgb(255,159,26)");
+  assert.equal(asciiInk(1 / 3, "phosphor"), "rgb(43,217,91)");
+  assert.equal(asciiInk(1 / 3, "ice"), "rgb(56,182,255)");
+  assert.equal(asciiInk(1 / 3, "sunset"), "rgb(224,69,123)");
+  assert.equal(asciiInk(1 / 3, "cyber"), "rgb(255,42,109)");
+  assert.equal(asciiInk(1 / 3, "mono"), "rgb(154,154,168)");
+  for (const table of Object.values(asciiPaletteLookup)) assert.equal(table.length, 256 * 3);
 });

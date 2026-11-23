@@ -1,7 +1,7 @@
 import { Platform } from "react-native";
 import { createAsciiGpu, type GpuCanvas } from "./ascii-gpu.web";
 import spaceBackgrounds from "./space-images.json";
-import { asciiColors, asciiGlyphs, buildAsciiGrid } from "./ascii-grid";
+import { asciiInk, asciiPalettes, asciiGlyphs, buildAsciiGrid } from "./ascii-grid";
 import { asciiScenes, updateAsciiScene } from "./ascii-scenes";
 import { AsciiWake } from "./ascii-wake";
 import type { Preferences } from "./preferences";
@@ -108,7 +108,7 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
     }
     if (wake.active) wake.step(delta);
     if (gpu) {
-      if (!gpu.draw(width, height, ratio, grid.cellWidth, grid.cellHeight, values.backgroundScale, { top: 0, center: .5, bottom: 1 }[values.position], elapsed, ({ custom: 0, lunar: 0, saturn: 1, galaxy: 2, nebula: 3 } as Record<string, number>)[values.background] ?? 0, wake, values.colorEnabled ? asciiColors[values.asciiColor] : [1, 1, 1])) {
+      if (!gpu.draw(width, height, ratio, grid.cellWidth, grid.cellHeight, values.backgroundScale, { top: 0, center: .5, bottom: 1 }[values.position], elapsed, ({ custom: 0, lunar: 0, saturn: 1, galaxy: 2, nebula: 3 } as Record<string, number>)[values.background] ?? 0, wake, values.colorEnabled ? asciiPalettes[values.asciiColor].stops : null)) {
         contextLost = true;
         target.removeAttribute("data-paseo-polish-ascii");
         return;
@@ -136,10 +136,9 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
             const value = field[y * 768 + x];
             const edge = Math.abs(value - field[y * 768 + Math.max(0, x - 1)]) + Math.abs(value - field[Math.max(0, y - 1) * 768 + x]);
             const light = Math.min(1, Math.max(0, (value / 255 - .02) * 1.35 + edge / 255 * .25)) ** .8 * (1 - sample[2] * .85);
-            context.fillStyle = "#080808";
+            context.fillStyle = values.colorEnabled ? "#0D0D12" : "#080808";
             context.fillRect(px, py, cellWidth, cellHeight);
-            const tone = Math.round(75 + light * 170);
-            context.fillStyle = `rgb(${(values.colorEnabled ? asciiColors[values.asciiColor] : [1, 1, 1]).map(channel => Math.round(tone * channel)).join(",")})`;
+            context.fillStyle = asciiInk(light, values.colorEnabled ? values.asciiColor : undefined);
             context.fillText(asciiGlyphs[Math.round(light * (asciiGlyphs.length - 1))], px, py);
           }
         }
@@ -156,14 +155,13 @@ export function mountAsciiBackground(target: AsciiTarget, initial: Preferences) 
         ctx.font = `${grid.fontSize}px "Paseo Geist Mono",Menlo,monospace`;
         ctx.textBaseline = "top";
       }
-      baseContext.fillStyle = "#080808";
+      baseContext.fillStyle = values.colorEnabled ? "#0D0D12" : "#080808";
       baseContext.fillRect(0, 0, width, height);
       for (let row = 0; row < grid.rows; row++) {
         for (let column = 0; column < grid.columns; column++) {
           const index = row * grid.columns + column;
           if (!grid.glyphs[index]) continue;
-          const tone = grid.tones[index];
-          baseContext.fillStyle = `rgb(${(values.colorEnabled ? asciiColors[values.asciiColor] : [1, 1, 1]).map(channel => Math.round(tone * channel)).join(",")})`;
+          baseContext.fillStyle = asciiInk(grid.lights[index] / 255, values.colorEnabled ? values.asciiColor : undefined);
           baseContext.fillText(asciiGlyphs[grid.glyphs[index]], column * grid.cellWidth, row * grid.cellHeight);
         }
       }

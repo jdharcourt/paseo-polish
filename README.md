@@ -71,4 +71,6 @@ The plugin uses shared, theme-aware controls adapted from [Notra UI](https://ui.
 
 The PR window distinguishes draft, open, merged, closed, and queued pull requests. While queued, it polls every 15 seconds and separates PR checks from the merge queue commit’s checks, showing queue position and state. Expand a check for its reported conclusion, failed steps, summary, and annotations, or open the complete CI output on GitHub. Queue API failures are shown explicitly; an unavailable queue commit never inherits passing PR checks.
 
-ASCII color controls switch between monochrome and amber, moss, rose, or violet. The palette applies to space and procedural scenes in both renderers. Additional live scenes include aurora curtains, plasma currents, a rotating torus, warped lattice, solar corona, and orbital traces.
+ASCII color controls switch between monochrome and the Devault website’s Devault, Console, Amber, Glacier, Dusk, Electric, or Mono palettes. The palette applies to space and procedural scenes in both renderers. Additional live scenes include aurora curtains, plasma currents, a rotating torus, warped lattice, solar corona, and orbital traces.
+
+Palette stops and the Classic glyph ramp match Devault’s generator settings. The procedural scene compositions are original interpretations, not exact copies of the library’s source artwork.

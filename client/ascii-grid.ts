@@ -1,11 +1,31 @@
-export const asciiColors = {
-  amber: [1, .68, .3],
-  moss: [.52, 1, .62],
-  rose: [1, .5, .62],
-  violet: [.8, .55, 1],
+export const asciiPalettes = {
+  devault: {"label": "Devault", "stops": [[74, 64, 173], [138, 129, 242], [208, 188, 247], [244, 241, 253]]},
+  phosphor: {"label": "Console", "stops": [[15, 122, 53], [43, 217, 91], [157, 255, 184], [226, 255, 235]]},
+  amber: {"label": "Amber", "stops": [[138, 67, 0], [255, 159, 26], [255, 210, 122], [255, 241, 210]]},
+  ice: {"label": "Glacier", "stops": [[30, 79, 216], [56, 182, 255], [168, 230, 255], [240, 251, 255]]},
+  sunset: {"label": "Dusk", "stops": [[91, 26, 143], [224, 69, 123], [255, 179, 71], [255, 243, 196]]},
+  cyber: {"label": "Electric", "stops": [[123, 44, 255], [255, 42, 109], [5, 217, 232], [209, 247, 255]]},
+  mono: {"label": "Mono", "stops": [[90, 90, 102], [154, 154, 168], [214, 214, 222], [255, 255, 255]]}
 };
 
-export const asciiGlyphs = " .,:;il!+<>=?[]{}1tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
+export const asciiPaletteLookup = Object.fromEntries(Object.entries(asciiPalettes).map(([key, palette]) => [key, Uint8Array.from({ length: 768 }, (_, index) => {
+  const position = Math.floor(index / 3) / 255 * 3;
+  const stop = Math.min(2, Math.floor(position));
+  const channel = index % 3;
+  return Math.round(palette.stops[stop][channel] + (palette.stops[stop + 1][channel] - palette.stops[stop][channel]) * (position - stop));
+})]));
+
+export function asciiInk(light: number, palette?: string) {
+  if (!palette) {
+    const tone = Math.round(75 + light * 170);
+    return `rgb(${tone},${tone},${tone})`;
+  }
+  const colors = asciiPaletteLookup[palette];
+  const index = Math.round(Math.max(0, Math.min(1, light)) * 255) * 3;
+  return `rgb(${colors[index]},${colors[index + 1]},${colors[index + 2]})`;
+}
+
+export const asciiGlyphs = " .:-=+*#%@";
 
 export function buildAsciiGrid(
   field: Uint8Array,
@@ -25,6 +45,7 @@ export function buildAsciiGrid(
   const top = (height - 432 * fitted) * ({ top: 0, center: .5, bottom: 1 }[position]);
   const glyphs = new Uint8Array(columns * rows);
   const tones = new Uint8Array(columns * rows);
+  const lights = new Uint8Array(columns * rows);
   for (let row = 0; row < rows; row++) {
     for (let column = 0; column < columns; column++) {
       const x = Math.floor((column * cellWidth + cellWidth / 2 - left) / fitted);
@@ -35,8 +56,9 @@ export function buildAsciiGrid(
       const light = Math.min(1, Math.max(0, (value / 255 - .02) * 1.35 + edge / 255 * .25)) ** .8;
       const index = row * columns + column;
       glyphs[index] = Math.round(light * (asciiGlyphs.length - 1));
+      lights[index] = Math.round(light * 255);
       tones[index] = Math.round(75 + light * 170);
     }
   }
-  return { columns, rows, cellWidth, cellHeight, fontSize, glyphs, tones };
+  return { columns, rows, cellWidth, cellHeight, fontSize, glyphs, tones, lights };
 }

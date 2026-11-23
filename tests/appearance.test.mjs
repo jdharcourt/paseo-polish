@@ -317,8 +317,13 @@ test("cursor controls migrate existing preferences, persist, and reject invalid 
   cleanup();
   cleanup = api.mountAppearance();
   assert.equal(api.getAppearance().values.colorEnabled, true);
-  assert.equal(api.getAppearance().values.asciiColor, "rose");
+  assert.equal(api.getAppearance().values.asciiColor, "sunset");
   assert.equal(api.preferencesSchema.safeParse({ asciiColor: "invalid" }).success, false);
   api.saveAppearance({ colorEnabled: false });
-  assert.equal(api.getAppearance().values.asciiColor, "rose");
+  assert.equal(api.getAppearance().values.asciiColor, "sunset");
  });
+
+test("old tint names migrate to website palettes", () => {
+  assert.equal(api.preferencesSchema.parse({ asciiColor: "moss" }).asciiColor, "phosphor");
+  assert.equal(api.preferencesSchema.parse({ asciiColor: "violet" }).asciiColor, "devault");
+});

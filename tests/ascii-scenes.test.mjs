@@ -62,7 +62,7 @@ test("live renderer animates glyphs, responds to cursor motion and stops for red
   events.get("pointermove")({ clientX: 210, clientY: 90, timeStamp: 1050 });
   step(1100);
   assert.notDeepEqual(canvases[1].toBuffer("image/png"), idle);
-  for (const asciiColor of ["amber", "moss", "rose", "violet"]) {
+  for (const asciiColor of ["devault", "phosphor", "amber", "ice", "sunset", "cyber", "mono"]) {
     renderer.update(preferencesSchema.parse({ background: "vortex", colorEnabled: true, asciiColor }));
     step(1150);
     const pixels = canvases[1].getContext("2d").getImageData(0, 0, 320, 180).data;

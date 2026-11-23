@@ -328,7 +328,7 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
                 ) : null}
                 <SettingsSwitch
                   label="Color ASCII"
-                  hint="Tint the characters. Switch off for monochrome."
+                  hint="Use the Devault website’s four-stop palettes. Switch off for monochrome."
                   value={values.colorEnabled}
                   onValueChange={(colorEnabled) => update({ colorEnabled })}
                   disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
@@ -339,9 +339,12 @@ export function AppearanceSettings({ theme, layout }: PluginSurfaceProps) {
                     value={values.asciiColor}
                     options={[
                       { label: "Amber", value: "amber" },
-                      { label: "Moss", value: "moss" },
-                      { label: "Rose", value: "rose" },
-                      { label: "Violet", value: "violet" },
+                      { label: "Devault", value: "devault" },
+                      { label: "Console", value: "phosphor" },
+                      { label: "Glacier", value: "ice" },
+                      { label: "Dusk", value: "sunset" },
+                      { label: "Electric", value: "cyber" },
+                      { label: "Mono", value: "mono" },
                     ]}
                     onValueChange={(asciiColor) => update({ asciiColor: asciiColor as Preferences["asciiColor"] })}
                     disabled={values.background === "custom" || !values.enabled || !values.wallpaperEnabled}
