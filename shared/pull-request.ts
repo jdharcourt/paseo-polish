@@ -6,8 +6,14 @@ export const pullRequestDetails = z.object({
   head: z.string(),
   repository: z.string(),
   reviewDecision: z.string(),
+  state: z.enum(["OPEN", "CLOSED", "MERGED"]),
+  isDraft: z.boolean(),
+  queue: z.object({ position: z.number(), state: z.string(), head: z.string().nullable() }).nullable(),
+  queueError: z.string(),
   checks: z.array(
     z.object({
+      source: z.enum(["pr", "queue"]),
+      reason: z.string(),
       name: z.string(),
       workflow: z.string(),
       url: z.string(),

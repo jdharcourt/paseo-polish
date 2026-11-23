@@ -27,6 +27,7 @@ export function PullRequestView({
     queryKey: ["polish-pr", workspaceId, pr.url, pr.head],
     queryFn: () => read({ workspaceId }),
     refetchInterval: 15000,
+    refetchIntervalInBackground: true,
     retry: 1,
   });
   const data =
@@ -41,8 +42,13 @@ export function PullRequestView({
   const [activityOpen, setActivityOpen] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [checkSource, setCheckSource] = useState<"pr" | "queue" | null>(null);
+  const source = data?.queue ? checkSource ?? "queue" : "pr";
+  const checks = data?.checks.filter(check => (check.source ?? "pr") === source) ?? [];
+  const status = data?.state ?? pr.state;
+  const statusLabel = status === "MERGED" ? "Merged" : status === "CLOSED" ? "Closed" : data?.queue ? "In merge queue" : data?.isDraft ? "Draft" : "Open";
   const counts = { success: 0, failure: 0, pending: 0, skipped: 0 };
-  for (const check of data?.checks ?? []) counts[check.state]++;
+  for (const check of checks) counts[check.state]++;
   const selected =
     filter ??
     (counts.failure
@@ -56,14 +62,14 @@ export function PullRequestView({
     ? "Checks unavailable"
     : !data
       ? "Loading checks…"
-      : !data.checks.length
-        ? "No checks reported"
+      : !checks.length
+        ? source === "queue" ? "Waiting for merge queue checks" : "No checks reported"
         : counts.failure
           ? "Some checks have failed"
           : counts.pending
             ? "Checks are running"
             : counts.success
-              ? "All checks have passed"
+              ? data.limited ? "Reported checks have passed" : "All checks have passed"
               : "All checks skipped";
   const text = { color: theme.colors.foreground, fontSize: 14 };
   const muted = { color: theme.colors.foregroundMuted, fontSize: 13 };
@@ -188,15 +194,15 @@ export function PullRequestView({
           >
             <Icon
               name={
-                pr.state === "MERGED"
+                status === "MERGED"
                   ? "GitMerge"
-                  : pr.state === "CLOSED"
+                  : status === "CLOSED"
                     ? "GitPullRequestClosed"
-                    : "GitPullRequest"
+                    : data?.queue ? "ListOrdered" : data?.isDraft ? "GitPullRequestDraft" : "GitPullRequest"
               }
               size={17}
               color={
-                pr.state === "OPEN"
+                status === "OPEN" && !data?.isDraft
                   ? theme.colors.statusSuccess
                   : theme.colors.accent
               }
@@ -205,19 +211,22 @@ export function PullRequestView({
               style={{
                 ...text,
                 color:
-                  pr.state === "OPEN"
+                  status === "OPEN" && !data?.isDraft
                     ? theme.colors.statusSuccess
                     : theme.colors.accent,
               }}
             >
-              {pr.state === "MERGED"
-                ? "Merged"
-                : pr.state === "CLOSED"
-                  ? "Closed"
-                  : "Open"}
+              {statusLabel}
             </Text>
             <Text style={muted}>{pr.url.split("/").slice(3, 5).join("/")}</Text>
           </View>
+          {data?.queue ? <Text style={muted}>Position {data.queue.position} · {data.queue.state.toLowerCase().replaceAll("_", " ")} · {data.queue.head ? `Queue commit ${data.queue.head.slice(0, 12)}` : "Waiting for a queue commit"}</Text> : null}
+          {data?.queueError ? <Text style={{ ...muted, color: theme.colors.statusWarning }}>{data.queueError}</Text> : null}
+          {data?.limited ? <Text style={muted}>Check output is limited; open GitHub for the full results.</Text> : null}
+          <Text style={muted}>Checks refresh every 15 seconds</Text>
+          {data?.queue ? <View style={{ flexDirection: "row", gap: 8 }}>
+            {(["pr", "queue"] as const).map(value => <NotraButton key={value} theme={theme} accessibilityLabel={`Show ${value === "pr" ? "PR" : "merge queue"} CI`} accessibilityState={{ selected: source === value }} onPress={() => { setCheckSource(value); setFilter(null); }} style={{ borderBottomWidth: source === value ? 1 : 0, borderBottomColor: theme.colors.foreground }}><Text style={text}>{value === "pr" ? "PR checks" : "Merge queue checks"}</Text></NotraButton>)}
+          </View> : null}
           {error ? (
             <Text style={{ ...text, color: theme.colors.statusDanger }}>
               {error}
@@ -295,33 +304,20 @@ export function PullRequestView({
                 >
                   <Text style={selected === state ? text : muted}>
                     {state === "all"
-                      ? `All ${data.checks.length}`
+                      ? `All ${checks.length}`
                       : `${state === "success" ? "Passed" : state === "failure" ? "Failed" : state === "pending" ? "Pending" : "Skipped"} ${counts[state]}`}
                   </Text>
                 </NotraButton>
               ))}
             </View>
-            {data.checks
+            {checks
               .filter((check) => selected === "all" || check.state === selected)
               .map((check, index) => (
-                <NotraButton theme={theme}
-                  key={`${check.name}:${index}`}
-                  accessibilityRole="link"
-                  accessibilityLabel={`${check.name}: ${check.state}`}
-                  disabled={!check.url}
-                  onPress={() => void openExternalUrl(check.url)}
-                  style={({ pressed }) => ({
-                    minHeight: 36,
-                    paddingVertical: 8,
-                    paddingHorizontal: 12,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 8,
-                    backgroundColor: pressed
-                      ? theme.colors.surface2
-                      : "transparent",
-                  })}
-                >
+                <NotraDisclosure
+                  theme={theme}
+                  key={`${source}:${check.name}:${index}`}
+                  label={`Details for ${check.name}: ${check.state}`}
+                  title={<View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   <Icon
                     name={icons[check.state]}
                     size={16}
@@ -340,7 +336,12 @@ export function PullRequestView({
                         ? `${Math.floor(check.durationSeconds / 60)}m ${check.durationSeconds % 60}s`
                         : `${check.durationSeconds}s`}
                   </Text>
-                </NotraButton>
+                  </View>}
+                >
+                  <Text style={muted}>{check.state === "failure" ? "Failed" : check.state === "pending" ? "Pending" : check.state === "success" ? "Passed" : "Skipped"} · {source === "queue" ? "Merge queue" : "PR"} check</Text>
+                  {check.reason ? <Markdown>{check.reason}</Markdown> : <Text style={muted}>{check.state === "failure" ? "No failure explanation was provided by this check. Open the CI run for failed steps and logs." : "No additional output provided."}</Text>}
+                  {check.url ? <NotraButton theme={theme} accessibilityLabel={`Open CI output for ${check.name}`} onPress={() => void openExternalUrl(check.url)}><Text style={text}>Open full CI output</Text></NotraButton> : null}
+                </NotraDisclosure>
               ))}
           </View>
         ) : null}

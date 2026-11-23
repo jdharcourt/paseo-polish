@@ -96,7 +96,7 @@ beforeEach(async () => {
   await mkdir(join(directory, "bin"));
   await writeFile(
     join(directory, "bin", "gh"),
-    `#!/usr/bin/env node\nconst fs=require('node:fs');const cp=require('node:child_process');const x=JSON.parse(fs.readFileSync('fixture.json','utf8'));if(x.fail)process.exit(1);if(x.switchBranch)cp.execFileSync('git',['switch','main']);if(process.argv.includes('list'))process.stdout.write(JSON.stringify(x.requests));else if(process.argv.includes('diff'))process.stdout.write(x.diff);else if(process.argv.includes('view'))process.stdout.write(JSON.stringify(x.details));else process.exit(2);\n`,
+    `#!/usr/bin/env node\nconst fs=require('node:fs');const cp=require('node:child_process');const x=JSON.parse(fs.readFileSync('fixture.json','utf8'));if(x.fail)process.exit(1);if(x.switchBranch)cp.execFileSync('git',['switch','main']);if(process.argv.includes('list'))process.stdout.write(JSON.stringify(x.requests));else if(process.argv.includes('diff'))process.stdout.write(x.diff);else if(process.argv.includes('view'))process.stdout.write(JSON.stringify(x.details));else if(process.argv.includes('graphql')){if(x.monitoring)process.stdout.write(JSON.stringify(x.monitoring));else process.exit(2);}else process.exit(2);\n`,
   );
   await chmod(join(directory, "bin", "gh"), 0o755);
   previousPath = process.env.PATH;
@@ -334,4 +334,35 @@ test("manual refresh bypasses the discovery cache when a PR opens", async () => 
     true,
   );
   assert.equal(result.pullRequest.number, 42);
+});
+
+test("queue CI uses the queue commit and retains PR check diagnostics separately", async () => {
+  await forge({
+    details: { url: "https://github.com/owner/project/pull/42", headRefOid: head, state: "OPEN", isDraft: false, reviewDecision: "", statusCheckRollup: [], comments: [], reviews: [] },
+    monitoring: { data: { repository: { pullRequest: {
+      headRefOid: head,
+      commits: { nodes: [{ commit: { statusCheckRollup: { contexts: { totalCount: 1, nodes: [{ name: "PR tests", conclusion: "SUCCESS" }] } } } }] },
+      mergeQueueEntry: { position: 2, state: "AWAITING_CHECKS", headCommit: { oid: "queue-sha", statusCheckRollup: { contexts: { totalCount: 1, nodes: [{ name: "Queue tests", conclusion: "FAILURE", summary: "Integration failed", steps: { nodes: [{ name: "Run tests", conclusion: "FAILURE" }] }, annotations: { nodes: [{ path: "test.ts", message: "Expected 2, got 1" }] } }] } } } },
+    } } } },
+  });
+  const result = await inspectPullRequest("task", { workspaces: { list: async () => ({ entries: [workspace()] }) } });
+  assert.deepEqual(result.queue, { position: 2, state: "AWAITING_CHECKS", head: "queue-sha" });
+  assert.equal(result.state, "OPEN");
+  assert.equal(result.queueError, "");
+  assert.deepEqual(result.checks.map(check => [check.source, check.state]), [["pr", "success"], ["queue", "failure"]]);
+  assert.match(result.checks[1].reason, /Run tests: FAILURE/);
+  assert.match(result.checks[1].reason, /test.ts: Expected 2, got 1/);
+});
+
+test("queue API failure is explicit while PR checks remain available", async () => {
+  const result = await inspectPullRequest("task", { workspaces: { list: async () => ({ entries: [workspace()] }) } });
+  assert.match(result.queueError, /unavailable/);
+  assert.equal(result.queue, null);
+});
+
+test("a queued PR without a generated commit has no queue checks", async () => {
+  await forge({ monitoring: { data: { repository: { pullRequest: { headRefOid: head, commits: { nodes: [] }, mergeQueueEntry: { position: 1, state: "QUEUED", headCommit: null } } } } } });
+  const result = await inspectPullRequest("task", { workspaces: { list: async () => ({ entries: [workspace()] }) } });
+  assert.equal(result.queue.head, null);
+  assert.equal(result.checks.filter(check => check.source === "queue").length, 0);
 });

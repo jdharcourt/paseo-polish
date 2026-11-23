@@ -27,7 +27,7 @@ await build({
               ? 'export const Pressable="Pressable", ScrollView="ScrollView", Text="Text", View="View";'
               : path.endsWith("/ui")
                 ? 'export const Icon="Icon", Markdown="Markdown", ScrollView="ScrollView";'
-                : "export const useRpc=()=>globalThis.readPr; export const useComposers=()=>globalThis.composers; export const openExternalUrl=async(url)=>globalThis.openedUrls.push(url);",
+                : "export const useRpc=()=>(...args)=>globalThis.readPr(...args); export const useComposers=()=>globalThis.composers; export const openExternalUrl=async(url)=>globalThis.openedUrls.push(url);",
         }));
       },
     },
@@ -245,5 +245,52 @@ test("manual refresh invokes checkout discovery and refetches PR details", async
     await tick();
   });
   assert.equal(refreshed, 1);
+  await close();
+});
+
+test("PR window distinguishes draft, open, closed and merged states", async () => {
+  for (const [state, isDraft, label] of [["OPEN", true, "Draft"], ["OPEN", false, "Open"], ["CLOSED", false, "Closed"], ["MERGED", false, "Merged"]]) {
+    const { renderer, close } = await mount({ ...fixture(), state, isDraft, queue: null });
+    assert.ok(renderer.root.findAllByType("Text").some(node => node.props.children === label));
+    await close();
+  }
+});
+
+test("queue checks are selected separately and expose failure details and CI links", async () => {
+  const data = { ...fixture(), state: "OPEN", isDraft: false, queue: { position: 2, state: "AWAITING_CHECKS", head: "queue-sha" } };
+  data.checks.push({ name: "Queue integration", source: "queue", state: "failure", reason: "Run integration: FAILURE\nExpected true", url: "https://github.com/owner/project/actions/runs/2", workflow: "Queue CI", durationSeconds: 2 });
+  const { renderer, close } = await mount(data);
+  assert.match(JSON.stringify(renderer.toJSON()), /In merge queue/);
+  assert.match(JSON.stringify(renderer.toJSON()), /Queue integration/);
+  assert.doesNotMatch(JSON.stringify(renderer.toJSON()), /All checks have passed/);
+  await act(async () => button(renderer, "Details for Queue integration: failure").props.onPress());
+  assert.match(JSON.stringify(renderer.toJSON()), /Expected true/);
+  await act(async () => button(renderer, "Open CI output for Queue integration").props.onPress());
+  assert.deepEqual(globalThis.openedUrls, ["https://github.com/owner/project/actions/runs/2"]);
+  await act(async () => button(renderer, "Show PR CI").props.onPress());
+  assert.match(JSON.stringify(renderer.toJSON()), /All checks have passed/);
+  assert.doesNotMatch(JSON.stringify(renderer.toJSON()), /Queue integration/);
+  await close();
+});
+
+test("queue waiting for a commit does not reuse passing PR checks", async () => {
+  const { renderer, close } = await mount({ ...fixture(), state: "OPEN", queue: { position: 1, state: "QUEUED", head: null } });
+  assert.match(JSON.stringify(renderer.toJSON()), /Waiting for merge queue checks/);
+  assert.doesNotMatch(JSON.stringify(renderer.toJSON()), /All checks have passed/);
+  await close();
+});
+
+test("refresh replaces queue checks when the queue commit changes and removes them after merge", async () => {
+  const data = { ...fixture(), state: "OPEN", queue: { position: 1, state: "AWAITING_CHECKS", head: "queue-old" } };
+  data.checks = [{ name: "Old queued build", source: "queue", state: "pending", reason: "", url: "", workflow: "", durationSeconds: null }];
+  const { renderer, close } = await mount(data);
+  globalThis.readPr = async () => ({ ...data, queue: { ...data.queue, head: "queue-new" }, checks: [{ ...data.checks[0], name: "New queued build", state: "failure", reason: "Timed out" }] });
+  await act(async () => { await button(renderer, "Refresh pull request").props.onPress(); await tick(); });
+  assert.match(JSON.stringify(renderer.toJSON()), /New queued build/);
+  assert.doesNotMatch(JSON.stringify(renderer.toJSON()), /Old queued build/);
+  globalThis.readPr = async () => ({ ...data, state: "MERGED", queue: null, checks: [] });
+  await act(async () => { await button(renderer, "Refresh pull request").props.onPress(); await tick(); });
+  assert.ok(renderer.root.findAllByType("Text").some(node => node.props.children === "Merged"));
+  assert.doesNotMatch(JSON.stringify(renderer.toJSON()), /New queued build/);
   await close();
 });
